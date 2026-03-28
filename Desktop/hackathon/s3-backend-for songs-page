@@ -1,0 +1,44 @@
+--------------------------------this is s3 to frontend for songs video------------------------------
+
+
+from flask import Flask, jsonify
+from flask_cors import CORS
+import boto3
+
+app = Flask(__name__)
+CORS(app)  # allow requests from frontend
+
+# AWS Config
+AWS_ACCESS_KEY_ID = '   '  #your acces key
+AWS_SECRET_ACCESS_KEY = '  '   # your secreat key
+AWS_REGION = 'us-east-2'  # your region 
+BUCKET_NAME = 'uploadingins3bypage' # your backet name 
+PREFIX = 'songs/' #your file name
+
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name=AWS_REGION
+)
+
+@app.route('/videos')
+def get_videos():
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET_NAME, Prefix=PREFIX)
+        video_urls = []
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            if key.endswith(('.mp4', '.webm', '.mov')):
+                url = s3.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': BUCKET_NAME, 'Key': key},
+                    ExpiresIn=3600
+                )
+                video_urls.append(url)
+        return jsonify(video_urls)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=80)

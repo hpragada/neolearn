@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>abinash cartoon Page</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background-color: #0f0f0f;
+            color: #fff;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background-color: #212121;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            height: 56px;
+        }
+
+        .header .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .logo img {
+            height: 24px;
+            margin-right: 10px;
+        }
+
+        .header .logo h1 {
+            font-size: 18px;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        .header .search-bar {
+            display: flex;
+            align-items: center;
+            flex: 0 1 600px;
+        }
+
+        .header .search-bar input {
+            background-color: #121212;
+            border: 1px solid #303030;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 16px;
+            border-radius: 2px 0 0 2px;
+            width: 100%;
+            outline: none;
+        }
+
+        .header .search-bar button {
+            background-color: #303030;
+            border: 1px solid #303030;
+            border-left: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 0 2px 2px 0;
+        }
+
+        .header .search-bar button::before {
+            content: '🔍';
+            font-size: 16px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background-color: #212121;
+            position: fixed;
+            top: 56px;
+            bottom: 0;
+            left: 0;
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .sidebar a:hover {
+            background-color: #383838;
+        }
+
+        .sidebar a::before {
+            content: '🏠';
+            margin-right: 16px;
+            font-size: 20px;
+        }
+
+        .sidebar a:nth-child(2)::before { content: '🔥'; }
+        .sidebar a:nth-child(3)::before { content: '📚'; }
+        .sidebar a:nth-child(4)::before { content: '🎵'; }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 240px;
+            padding: 24px;
+        }
+
+        .video-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .video-box {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .video-box img.thumbnail {
+            width: 100%;
+            border-radius: 12px;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+
+        .video-box video {
+            width: 100%;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .video-box:hover .thumbnail {
+            opacity: 0.8;
+        }
+
+        .video-info {
+            padding: 12px 0;
+        }
+
+        .video-info h3 {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0 0 6px;
+            line-height: 22px;
+            max-height: 44px;
+            overflow: hidden;
+        }
+
+        .video-info p {
+            font-size: 14px;
+            color: #aaaaaa;
+            margin: 4px 0;
+        }
+
+        /* Custom Controls */
+        .controls {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            gap: 8px;
+        }
+
+        .video-box:hover .controls {
+            display: flex;
+        }
+
+        .controls button {
+            background: rgba(0, 0, 0, 0.7);
+            border: none;
+            border-radius: 4px;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls button:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .header .search-bar {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg" alt="Logo">  
+            <h1>Abinash cartoon Page</h1>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Search">
+            <button></button>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <a href="#">Home</a>
+        <a href="#">Trending</a>
+        <a href="#">Subscriptions</a>
+        <a href="#">Music</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="video-container" id="videos"></div>
+    </div>
+   <script>
+    async function loadVideos() {
+        try {
+            const response = await fetch('http://s3backpart2-377407161.us-east-2.elb.amazonaws.com/videos');  #your backend code 
+            const videoUrls = await response.json();
+
+            const container = document.getElementById('videos');
+            container.innerHTML = '';
+
+            // Array of unique thumbnails — make sure this matches or exceeds video count
+            const thumbnailUrls = [
+                'https://i.ytimg.com/vi/ldDuVSre5Xk/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLCz1nxfK1OU2lRJiyPIoM5jU2W3wQ', # your thmailnail images 
+                'https://m.media-amazon.com/images/M/MV5BZjE4YzViZmEtYjRhMi00NzIyLTkxZDktMzQzM2IzNTA5MWQ2XkEyXkFqcGc@._V1_.jpg',
+                'https://i.ytimg.com/vi/LCm55hv9ZZI/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDvQ4B35VXvY7Tg_X6aWLKYH5l64g',
+                'https://i.ytimg.com/vi/dWtJ6jpCEsM/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAxZ2YiMCeccxTUHG6KyJ0H97O6dQ',
+                'https://m.media-amazon.com/images/S/pv-target-images/259fbc97ce839d091caea10e1d0c626a4821eb5f7086568e4b1b61a8f9036252._SX1080_FMjpg_.jpg',
+                'https://i.ytimg.com/vi/t0Q2otsqC4I/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBgbkdHwq9v7C3DObsH54uBSf8hiw',
+                'https://filmschoolrejects.com/wp-content/uploads/2021/02/Tom-Jerry-Best-Cartoons-HBO-Max-800x480.jpg',
+                'https://www.deccanchronicle.com/h-upload/2024/02/09/1074665-tomandjerrycaughtintheact.webp',
+                'https://i.ytimg.com/vi/JTeWMEB5Ssk/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLD2iONweZbA1KWWTqMdvSNTG4VZKw' // ✅ New thumbnail
+            ];
+
+            videoUrls.forEach((url, index) => {
+                console.log('Creating video box for:', url); // Debug
+
+                const box = document.createElement('div');
+                box.className = 'video-box';
+
+                // Thumbnail
+                const thumbnail = document.createElement('img');
+                thumbnail.className = 'thumbnail';
+                thumbnail.src = thumbnailUrls[index % thumbnailUrls.length]; // Loop if fewer thumbs
+                thumbnail.alt = `Video ${index + 1}`;
+
+                // Video
+                const video = document.createElement('video');
+                video.src = url;
+                video.id = `video-${index}`;
+                video.controls = true;
+                video.preload = "auto";
+                video.style.display = 'none';
+
+                // Info
+                const videoInfo = document.createElement('div');
+                videoInfo.className = 'video-info';
+                videoInfo.innerHTML = `
+                    <h3>Song - ${index + 1}</h3>
+                    <p>Artist Name • ${Math.floor(Math.random() * 1000)}K views • ${Math.floor(Math.random() * 12) + 1} months ago</p>
+                `;
+
+                // Toggle playback on thumbnail click
+                thumbnail.onclick = () => {
+                    document.querySelectorAll('video').forEach(v => {
+                        if (v !== video) {
+                            v.pause();
+                            v.style.display = 'none';
+                            v.parentElement.querySelector('.thumbnail').style.display = 'block';
+                        }
+                    });
+
+                    if (video.paused) {
+                        video.style.display = 'block';
+                        thumbnail.style.display = 'none';
+                        video.play();
+                    } else {
+                        video.pause();
+                        video.style.display = 'none';
+                        thumbnail.style.display = 'block';
+                    }
+                };
+
+                box.appendChild(thumbnail);
+                box.appendChild(video);
+                box.appendChild(videoInfo);
+                container.appendChild(box);
+            });
+        } catch (error) {
+            console.error('Error loading videos:', error);
+            alert("Failed to load videos.");
+        }
+    }
+
+    window.onload = loadVideos;
+</script>
+
+
+    </body>
+</html>

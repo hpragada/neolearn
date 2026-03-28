@@ -1,0 +1,74 @@
+from flask import Flask, jsonify
+from flask_cors import CORS
+import boto3
+
+app = Flask(__name__)
+CORS(app)
+
+# =========================
+# AWS CONFIG
+# =========================
+AWS_REGION = "us-east-2"
+BUCKET_NAME = "uploadingins3bypage"
+PREFIX = "Cartoon/"
+
+# =========================
+# S3 CLIENT (NO KEYS NEEDED IF IAM ROLE ATTACHED)
+# =========================
+s3 = boto3.client("s3", region_name=AWS_REGION)
+
+# =========================
+# HOME ROUTE
+# =========================
+@app.route("/")
+def home():
+    return "🎬 Cartoon Backend Running Successfully!"
+
+# =========================
+# VIDEOS API
+# =========================
+@app.route("/videos")
+def get_videos():
+    try:
+        response = s3.list_objects_v2(
+            Bucket=BUCKET_NAME,
+            Prefix=PREFIX
+        )
+
+        videos = []
+
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                key = obj["Key"]
+
+                if key.endswith((".mp4", ".webm", ".mov")):
+                    url = s3.generate_presigned_url(
+                        "get_object",
+                        Params={
+                            "Bucket": BUCKET_NAME,
+                            "Key": key
+                        },
+                        ExpiresIn=3600
+                    )
+
+                    videos.append({
+                        "file": key,
+                        "url": url
+                    })
+
+        return jsonify({
+            "count": len(videos),
+            "videos": videos
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+
+# =========================
+# RUN APP
+# =========================
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
