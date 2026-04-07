@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoLearn 2.0 AI Tutor</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #fff; margin: 0; padding: 0; }
+header { background-color: #1f1f1f; padding: 20px; text-align: center; color: #00ff99; font-size: 2rem; font-weight: bold; }
+.container { max-width: 900px; margin: 30px auto; padding: 20px; }
+.card { background-color: #1e1e1e; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
+.card h2 { color: #00ff99; margin-bottom: 10px; }
+textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: none; background-color: #2a2a2a; color: #fff; font-size: 16px; }
+button { padding: 12px 20px; border: none; border-radius: 10px; background-color: #00ff99; color: #000; font-weight: bold; cursor: pointer; font-size: 16px; }
+button:hover { background-color: #00cc77; }
+pre { background-color: #2a2a2a; padding: 15px; border-radius: 10px; white-space: pre-wrap; font-size: 15px; color: #fff; }
+.section-title { color: #00ff99; font-size: 1.5rem; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<header>NeoLearn 2.0 AI Tutor 🤖</header>
+
+<div class="container">
+  <div class="card">
+    <h2 class="section-title">Ask AI - Step by Step Answer</h2>
+    <select id="subject">
+      <option value="Computer Science">Computer Science</option>
+      <option value="Electrical Engineering">Electrical Engineering</option>
+      <option value="Electronics">Electronics</option>
+      <option value="Mechanical Engineering">Mechanical Engineering</option>
+      <option value="Civil Engineering">Civil Engineering</option>
+      <option value="Mathematics">Mathematics</option>
+      <option value="Physics">Physics</option>
+      <option value="Chemistry">Chemistry</option>
+    </select>
+    <textarea id="question" placeholder="Type your B.Tech question here..."></textarea>
+    <button id="askBtn">Ask AI</button>
+    <h3>Answer:</h3>
+    <pre id="answer">Waiting for your question...</pre>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">Generate Quiz from Notes/Text</h2>
+    <textarea id="notes" placeholder="Paste your notes or text here..."></textarea>
+    <button id="quizBtn">Generate Quiz</button>
+    <h3>Quiz:</h3>
+    <pre id="quiz">Generated quiz will appear here...</pre>
+  </div>
+</div>
+
+<script>
+const BASE_URL = "http://127.0.0.1:8000";
+
+document.getElementById("askBtn").addEventListener("click", async () => {
+  const subject = document.getElementById("subject").value;
+  const question = document.getElementById("question").value.trim();
+  if (!question) { alert("Please type a question!"); return; }
+  const answerEl = document.getElementById("answer");
+  answerEl.textContent = "Thinking... 🤔";
+  try {
+    const res = await fetch(`${BASE_URL}/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subject, question })
+    });
+    const data = await res.json();
+    answerEl.textContent = data.answer || "No answer received!";
+  } catch(err) {
+    answerEl.textContent = "Error connecting to AI 😢";
+    console.error(err);
+  }
+});
+
+document.getElementById("quizBtn").addEventListener("click", async () => {
+  const notes = document.getElementById("notes").value.trim();
+  if (!notes) { alert("Please enter some notes!"); return; }
+  const quizEl = document.getElementById("quiz");
+  quizEl.textContent = "Generating quiz... 📝";
+  try {
+    const res = await fetch(`${BASE_URL}/quiz`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes })
+    });
+    const data = await res.json();
+    quizEl.textContent = data.quiz || "No quiz generated!";
+  } catch(err) {
+    quizEl.textContent = "Error generating quiz 😢";
+    console.error(err);
+  }
+});
+</script>
+
+</body>
+</html>

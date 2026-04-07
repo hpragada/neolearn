@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NeoLearn Quiz Pro</title>
+
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Firebase (v8 for simple use) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI;
+  background:#0a0a0a;
+  color:white;
+}
+
+h1{text-align:center;margin-top:20px;}
+
+/* MODULES */
+#mainModules, #subModules{
+  display:flex;
+  gap:20px;
+  padding:30px;
+}
+
+.module{
+  flex:1;
+  padding:40px;
+  background:#111;
+  border-radius:15px;
+  text-align:center;
+  cursor:pointer;
+  transition:0.3s;
+}
+.module:hover{
+  background:#00f5c4;
+  color:black;
+  transform:scale(1.05);
+}
+
+/* EXPLAIN */
+#explain{
+  display:none;
+  padding:20px;
+  margin:20px;
+  background:#111;
+  border-radius:10px;
+}
+
+/* QUIZ */
+#quiz{display:none;padding:20px;}
+
+.question{
+  background:#111;
+  padding:20px;
+  border-radius:10px;
+}
+
+.options button{
+  width:100%;
+  margin:8px 0;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#222;
+  color:white;
+  cursor:pointer;
+}
+.options button:hover{
+  background:#00f5c4;
+  color:black;
+}
+
+#topBar{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
+}
+
+#progress{
+  height:6px;
+  background:#00f5c4;
+  width:0%;
+}
+
+button{
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#00f5c4;
+}
+
+/* SCOREBOARD */
+#scoreBoard{
+  display:none;
+  text-align:center;
+  padding:30px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🔥 NeoLearn Quiz</h1>
+
+<!-- MAIN -->
+<div id="mainModules">
+  <div class="module" onclick="openModule('FLAT')">FLAT</div>
+  <div class="module" onclick="openModule('DAA')">DAA</div>
+  <div class="module" onclick="openModule('APT')">APTITUDE</div>
+</div>
+
+<!-- SUB -->
+<div id="subModules"></div>
+
+<!-- EXPLAIN -->
+<div id="explain">
+  <h2 id="topicTitle"></h2>
+  <p id="topicDesc"></p>
+  <button onclick="startQuiz()">Start Test</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz">
+  <div id="topBar">
+    <div id="timer">Time: 10:00</div>
+    <div style="width:50%;background:#222;">
+      <div id="progress"></div>
+    </div>
+  </div>
+
+  <div class="question" id="questionBox"></div>
+
+  <div style="display:flex;justify-content:space-between;margin-top:10px;">
+    <button onclick="prevQ()">Prev</button>
+    <button onclick="nextQ()">Next</button>
+  </div>
+</div>
+
+<!-- SCOREBOARD -->
+<div id="scoreBoard">
+  <h1>🎉 Completed</h1>
+  <h2 id="finalScore"></h2>
+  <h3 id="finalPercent"></h3>
+
+  <canvas id="chart" style="max-width:400px;margin:20px auto;"></canvas>
+
+  <button onclick="goHome()">Back Home</button>
+</div>
+
+<script>
+
+// 🔥 FIREBASE CONFIG (PUT YOUR KEYS)
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// 🔥 DATA
+function makeQ(topic){
+  let arr=[];
+  for(let i=1;i<=10;i++){
+    arr.push({
+      q:`${topic} Question ${i}`,
+      o:["A","B","C","D"],
+      a:"A"
+    });
+  }
+  return arr;
+}
+
+
+// 🔥 REAL QUESTIONS (15 EACH)
+
+const data = {
+
+FLAT:{
+DFA:{
+desc:"DFA has one transition per input.\nUsed for regular languages.",
+q:[
+{q:"DFA stands for?",o:["Deterministic Finite Automaton","Dynamic FA","Direct FA","None"],a:"Deterministic Finite Automaton"},
+{q:"DFA accepts?",o:["Regular languages","CFG","All","None"],a:"Regular languages"},
+{q:"Transitions?",o:["One","Many","None","All"],a:"One"},
+{q:"States?",o:["Finite","Infinite","None","All"],a:"Finite"},
+{q:"Used in?",o:["Compiler","OS","DB","All"],a:"All"},
+{q:"Start state?",o:["One","Many","None","All"],a:"One"},
+{q:"Final states?",o:["Accepting","Rejecting","None","All"],a:"Accepting"},
+{q:"Input?",o:["Alphabet","Numbers","None","All"],a:"Alphabet"},
+{q:"Loop allowed?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Output?",o:["Accept/Reject","Number","None","All"],a:"Accept/Reject"},
+{q:"Language type?",o:["Regular","CFG","CSG","None"],a:"Regular"},
+{q:"Deterministic means?",o:["One path","Many path","None","All"],a:"One path"},
+{q:"Transition function?",o:["δ","λ","γ","None"],a:"δ"},
+{q:"Machine type?",o:["Finite","Infinite","None","All"],a:"Finite"},
+{q:"Closure property?",o:["Yes","No","None","All"],a:"Yes"}
+]
+},
+
+NFA:{
+desc:"NFA allows multiple transitions.\nIncludes epsilon moves.",
+q:[
+{q:"NFA stands for?",o:["Non Deterministic FA","Normal FA","None","All"],a:"Non Deterministic FA"},
+{q:"Transitions?",o:["Many","One","None","All"],a:"Many"},
+{q:"Epsilon moves?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Equivalent to DFA?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Paths?",o:["Multiple","Single","None","All"],a:"Multiple"},
+{q:"Conversion?",o:["DFA","Regex","None","All"],a:"All"},
+{q:"States?",o:["Finite","Infinite","None","All"],a:"Finite"},
+{q:"Accept condition?",o:["Any path","All path","None","All"],a:"Any path"},
+{q:"Used in?",o:["Theory","Web","None","All"],a:"Theory"},
+{q:"Complexity?",o:["Less strict","Strict","None","All"],a:"Less strict"},
+{q:"Transition function?",o:["δ","λ","None","All"],a:"δ"},
+{q:"Multiple outputs?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Initial states?",o:["One","Many","None","All"],a:"One"},
+{q:"Language type?",o:["Regular","CFG","None","All"],a:"Regular"},
+{q:"Closure?",o:["Yes","No","None","All"],a:"Yes"}
+]
+},
+
+REGEX:{
+desc:"Regex matches patterns.\nUsed in validation.",
+q:[
+{q:"Regex used for?",o:["Pattern matching","Sorting","None","All"],a:"Pattern matching"},
+{q:"* means?",o:["0 or more","1","None","All"],a:"0 or more"},
+{q:"+ means?",o:["1 or more","0","None","All"],a:"1 or more"},
+{q:"| means?",o:["OR","AND","None","All"],a:"OR"},
+{q:"Used in?",o:["Search","Validation","Compiler","All"],a:"All"},
+{q:"Language type?",o:["Regular","CFG","None","All"],a:"Regular"},
+{q:"Output?",o:["Match","Error","None","All"],a:"Match"},
+{q:"Forms?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Works on?",o:["Strings","Numbers","None","All"],a:"Strings"},
+{q:"Engine?",o:["Parser","CPU","None","All"],a:"Parser"},
+{q:"Concatenation?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Kleene star?",o:["*","+",".","None"],a:"*"},
+{q:"Union?",o:["|","&","None","All"],a:"|"},
+{q:"Alphabet?",o:["Symbols","Numbers","None","All"],a:"Symbols"},
+{q:"Used in code?",o:["Yes","No","None","All"],a:"Yes"}
+]
+},
+
+},
+
+DAA:{
+STACK:{
+desc:"Stack uses LIFO.\nPush & Pop.",
+q:[
+{q:"Stack follows?",o:["LIFO","FIFO","None","All"],a:"LIFO"},
+{q:"Insert?",o:["Push","Pop","None","All"],a:"Push"},
+{q:"Delete?",o:["Pop","Push","None","All"],a:"Pop"},
+{q:"Top element?",o:["Peek","Front","None","All"],a:"Peek"},
+{q:"Overflow?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Used in?",o:["Recursion","Compiler","All","None"],a:"All"},
+{q:"Access?",o:["Top","Middle","None","All"],a:"Top"},
+{q:"Type?",o:["Linear","Tree","None","All"],a:"Linear"},
+{q:"Reverse uses?",o:["Stack","Queue","None","All"],a:"Stack"},
+{q:"Memory?",o:["Static/Dynamic","None","All","Random"],a:"Static/Dynamic"},
+{q:"Underflow?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Structure?",o:["Array/Linked","Tree","None","All"],a:"Array/Linked"},
+{q:"Push adds?",o:["Top","Bottom","None","All"],a:"Top"},
+{q:"Pop removes?",o:["Top","Bottom","None","All"],a:"Top"},
+{q:"Used in DFS?",o:["Yes","No","None","All"],a:"Yes"}
+]
+},
+
+QUEUE:{
+desc:"Queue uses FIFO.\nEnqueue & Dequeue.",
+q:[
+{q:"Queue follows?",o:["FIFO","LIFO","None","All"],a:"FIFO"},
+{q:"Insert?",o:["Enqueue","Push","None","All"],a:"Enqueue"},
+{q:"Delete?",o:["Dequeue","Pop","None","All"],a:"Dequeue"},
+{q:"Front?",o:["Front","Top","None","All"],a:"Front"},
+{q:"Used in?",o:["Scheduling","OS","All","None"],a:"All"},
+{q:"Type?",o:["Linear","Tree","None","All"],a:"Linear"},
+{q:"Overflow?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Access?",o:["Front","Middle","None","All"],a:"Front"},
+{q:"Circular queue?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Memory?",o:["Dynamic","Static","None","All"],a:"Dynamic"},
+{q:"Rear adds?",o:["End","Start","None","All"],a:"End"},
+{q:"Remove from?",o:["Front","End","None","All"],a:"Front"},
+{q:"Used BFS?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Structure?",o:["Array/Linked","Tree","None","All"],a:"Array/Linked"},
+{q:"Empty?",o:["Front=Rear","None","All","Random"],a:"Front=Rear"}
+]
+},
+
+SORT:{
+desc:"Sorting arranges data.\nImproves search.",
+q:[
+{q:"Fastest avg?",o:["Quick","Bubble","None","All"],a:"Quick"},
+{q:"Stable?",o:["Merge","Quick","None","All"],a:"Merge"},
+{q:"Worst bubble?",o:["O(n²)","O(n)","None","All"],a:"O(n²)"},
+{q:"Divide & conquer?",o:["Merge","Bubble","None","All"],a:"Merge"},
+{q:"In-place?",o:["Quick","Merge","None","All"],a:"Quick"},
+{q:"Comparison sort?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Used in?",o:["Data","Search","All","None"],a:"All"},
+{q:"Best bubble?",o:["O(n)","O(n²)","None","All"],a:"O(n)"},
+{q:"Heap uses?",o:["Heap sort","Merge","None","All"],a:"Heap sort"},
+{q:"Slowest?",o:["Bubble","Quick","None","All"],a:"Bubble"},
+{q:"Selection?",o:["O(n²)","O(n)","None","All"],a:"O(n²)"},
+{q:"Merge space?",o:["Extra","None","All","Zero"],a:"Extra"},
+{q:"Quick pivot?",o:["Yes","No","None","All"],a:"Yes"},
+{q:"Stable?",o:["Merge","Heap","None","All"],a:"Merge"},
+{q:"Used in DB?",o:["Yes","No","None","All"],a:"Yes"}
+]
+},
+
+},
+
+
+APT:{
+
+MATH:{
+desc:"Covers percentages, profit & loss, ratios.\nVery important for placements.",
+q:[
+{q:"50% of 200?",o:["100","150","50","200"],a:"100"},
+{q:"Profit = ?",o:["SP-CP","CP-SP","SP+CP","None"],a:"SP-CP"},
+{q:"CP=100, SP=120 Profit%?",o:["20%","10%","25%","30%"],a:"20%"},
+{q:"Ratio 2:3, total 50 → first?",o:["20","30","25","10"],a:"20"},
+{q:"25% of 80?",o:["20","25","30","10"],a:"20"},
+{q:"Loss formula?",o:["CP-SP","SP-CP","None","All"],a:"CP-SP"},
+{q:"Discount = ?",o:["MP-SP","SP-MP","None","All"],a:"MP-SP"},
+{q:"If SP=CP?",o:["No profit no loss","Profit","Loss","None"],a:"No profit no loss"},
+{q:"10% of 500?",o:["50","100","25","75"],a:"50"},
+{q:"Ratio 1:1 → 40 each?",o:["20","40","10","80"],a:"20"},
+{q:"CP=200 SP=180?",o:["Loss","Profit","None","All"],a:"Loss"},
+{q:"Profit 50 on CP 100?",o:["50%","25%","10%","None"],a:"50%"},
+{q:"30% of 300?",o:["90","60","30","120"],a:"90"},
+{q:"SP formula?",o:["CP+Profit","CP-Loss","None","All"],a:"CP+Profit"},
+{q:"Loss 20 on CP100?",o:["20%","10%","5%","None"],a:"20%"}
+]
+},
+
+LOGIC:{
+desc:"Tests reasoning, patterns & sequences.\nImproves thinking ability.",
+q:[
+{q:"Odd one: 2,4,6,9",o:["9","6","4","2"],a:"9"},
+{q:"Next: 2,4,8,16 ?",o:["32","24","20","18"],a:"32"},
+{q:"A=1,B=2 → C?",o:["3","4","5","6"],a:"3"},
+{q:"Mirror of 12?",o:["21","12","None","All"],a:"21"},
+{q:"Series: 1,3,6,10 ?",o:["15","12","14","16"],a:"15"},
+{q:"Odd: cat,dog,apple?",o:["apple","cat","dog","None"],a:"apple"},
+{q:"2,6,7,21,22 ?",o:["66","44","30","50"],a:"66"},
+{q:"A+B=10, A=6 B=?",o:["4","6","2","None"],a:"4"},
+{q:"Next: 5,10,20 ?",o:["40","30","25","50"],a:"40"},
+{q:"Odd: red,blue,car?",o:["car","red","blue","None"],a:"car"},
+{q:"Square pattern: 2,4,9 ?",o:["16","25","36","49"],a:"16"},
+{q:"Alphabet after D?",o:["E","F","G","H"],a:"E"},
+{q:"Opposite of hot?",o:["Cold","Warm","Cool","None"],a:"Cold"},
+{q:"Series: 3,9,27 ?",o:["81","54","60","90"],a:"81"},
+{q:"Odd: sun,moon,chair?",o:["chair","sun","moon","None"],a:"chair"}
+]
+},
+
+SPEED:{
+desc:"Time, speed & work problems.\nFocus on fast solving.",
+q:[
+{q:"Speed formula?",o:["D/T","T/D","D+T","None"],a:"D/T"},
+{q:"Time = ?",o:["D/S","S/D","D+S","None"],a:"D/S"},
+{q:"Distance = ?",o:["S×T","S/T","None","All"],a:"S×T"},
+{q:"60km in 2hr speed?",o:["30","40","20","60"],a:"30"},
+{q:"Speed 50, time 2 distance?",o:["100","50","25","None"],a:"100"},
+{q:"Work formula?",o:["Work=Rate×Time","None","All","Rate"],a:"Work=Rate×Time"},
+{q:"If speed doubles?",o:["Time halves","Time doubles","None","All"],a:"Time halves"},
+{q:"Train problem uses?",o:["Speed","Time","Distance","All"],a:"All"},
+{q:"Distance 100 speed 20 time?",o:["5","4","2","10"],a:"5"},
+{q:"Time 10 speed 5 distance?",o:["50","40","30","20"],a:"50"},
+{q:"Speed 10 distance 100 time?",o:["10","5","20","None"],a:"10"},
+{q:"If time increases?",o:["Speed decreases","Speed increases","None","All"],a:"Speed decreases"},
+{q:"Unit of speed?",o:["km/hr","m","sec","None"],a:"km/hr"},
+{q:"Relative speed?",o:["Sum/Diff","Multiply","None","All"],a:"Sum/Diff"},
+{q:"Boat problems use?",o:["Relative speed","None","All","Speed"],a:"Relative speed"}
+]
+}
+
+}
+
+};
+
+
+// VARIABLES
+let currentModule,currentTopic,questions,index,answers,time,timer;
+
+// MODULE
+function openModule(mod){
+  currentModule=mod;
+  document.getElementById("mainModules").style.display="none";
+
+  let sub=document.getElementById("subModules");
+  sub.innerHTML="";
+  sub.style.display="flex";
+
+  Object.keys(data[mod]).forEach(t=>{
+    sub.innerHTML+=`<div class="module" onclick="showExplain('${t}')">${t}</div>`;
+  });
+}
+
+// EXPLAIN
+function showExplain(topic){
+  currentTopic=topic;
+  document.getElementById("explain").style.display="block";
+
+  document.getElementById("topicTitle").innerText=topic;
+  document.getElementById("topicDesc").innerHTML=
+    data[currentModule][topic].desc.replace(/\n/g,"<br><br>");
+}
+
+// START
+function startQuiz(){
+  document.getElementById("quiz").style.display="block";
+
+  questions=data[currentModule][currentTopic].q;
+  index=0; answers=[]; time=600;
+
+  loadQ();
+  clearInterval(timer);
+  timer=setInterval(updateTimer,1000);
+}
+
+// LOAD Q
+function loadQ(){
+  let q=questions[index];
+  let html=`<b>Q${index+1}:</b> ${q.q}<div class="options">`;
+
+  q.o.forEach(opt=>{
+    html+=`<button onclick="selectAns('${opt}')">${opt}</button>`;
+  });
+
+  html+=`</div>`;
+  document.getElementById("questionBox").innerHTML=html;
+
+  document.getElementById("progress").style.width=
+    ((index+1)/10*100)+"%";
+}
+
+// SELECT
+function selectAns(a){answers[index]=a;}
+
+// NAV
+function nextQ(){ index<9 ? (index++,loadQ()) : showResult(); }
+function prevQ(){ if(index>0){index--;loadQ();} }
+
+// TIMER
+function updateTimer(){
+  let m=Math.floor(time/60),s=time%60;
+  document.getElementById("timer").innerText=`Time: ${m}:${s}`;
+  time--;
+  if(time<=0){clearInterval(timer);showResult();}
+}
+
+// RESULT
+function showResult(){
+  clearInterval(timer);
+
+  let score=answers.filter((a,i)=>a===questions[i].a).length;
+  let percent=Math.round(score/10*100);
+
+  document.getElementById("quiz").style.display="none";
+  document.getElementById("scoreBoard").style.display="block";
+
+  document.getElementById("finalScore").innerText=`Score: ${score}/10`;
+  document.getElementById("finalPercent").innerText=`${percent}% Performance`;
+}
+  // SAVE FIREBASE
+ const userId = firebase.auth().currentUser.uid;
+const userRef = db.collection("users").doc(userId);
+
+userRef.set({
+    quizProgress: {
+        [currentModule + "_" + currentTopic]: {
+            score,
+            percent,
+            date: new Date().toISOString()
+        }
+    }
+}, { merge: true });
+
+// Update totalScore
+userRef.get().then(doc => {
+    const quizzes = doc.data().quizProgress || {};
+    let total = 0;
+    Object.values(quizzes).forEach(q => total += q.score);
+    userRef.update({ totalScore: total });
+});
+
+// CHART
+// ===== UPDATE QUIZ SCORE =====
+function updateScore(subject, score){
+  // 1️⃣ Save to Firebase
+  const quizProgress = {};
+  quizProgress[subject] = { percent: score }; // e.g., { FLAT: {percent: 8} }
+
+  userRef.set({
+    quizProgress: quizProgress
+  }, { merge: true }) // merge keeps other subjects intact
+  .then(()=>{
+    console.log("Score saved to dashboard!");
+    loadChart(score);       // 2️⃣ Update chart immediately
+    loadUser();             // 3️⃣ Refresh dashboard subject %
+  })
+  .catch(err=>console.error(err));
+}
+
+// ===== CHART =====
+function loadChart(score){
+  if(window.chart) window.chart.destroy();
+
+  window.chart = new Chart(document.getElementById("chart"),{
+    type:"doughnut",
+    data:{
+      labels:["Score","Remaining"],
+      datasets:[{
+        data:[score, 10-score],
+        backgroundColor:["#00f5c4","#161b22"]
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:'bottom'}
+      }
+    }
+  });
+}
+
+// BACK BUTTON
+function goHome(){
+  showDash(); // shows dashboard instead of reload
+}
+</script>
+
+</body>
+</html>

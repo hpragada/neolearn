@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoLearn Summarization</title>
+
+<!-- Tesseract -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+</script>
+
+<!-- jsPDF (FIX ADDED) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{margin:0;padding:20px;font-family:sans-serif;background:#111;color:white;}
+h2{color:#00f5c4;}
+textarea{width:100%;height:200px;padding:15px;background:#222;color:white;border:none;border-radius:12px;resize:none;}
+button{padding:10px 15px;margin:5px;border:none;border-radius:8px;background:#00f5c4;color:black;cursor:pointer;}
+#summaryOutput{background:rgba(0,245,196,0.1);padding:15px;border-radius:12px;margin-top:15px;display:none;}
+.container{max-width:900px;margin:auto;}
+#progressBar{width:100%;background:#333;height:20px;border-radius:10px;overflow:hidden;margin:10px 0;display:none;}
+#progressBarInner{height:100%;width:0%;background:#00f5c4;}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h2>NeoLearn Summarization 🧠</h2>
+
+<textarea id="noteInput" placeholder="Summarized text will appear here..."></textarea>
+
+<div>
+<input type="file" id="pdfFile" accept="application/pdf,image/*">
+<button id="uploadPDFBtn">📄 Upload & OCR PDF/Image</button>
+<button id="summarizeNoteBtn">🤖 Summarize Text</button>
+<button id="saveNoteBtn">💾 Download TXT</button>
+<button id="savePDFBtn">📥 Download PDF</button>
+</div>
+
+<div id="progressBar"><div id="progressBarInner"></div></div>
+<div id="summaryOutput"></div>
+</div>
+
+<script>
+const noteInput = document.getElementById("noteInput");
+const summaryOutput = document.getElementById("summaryOutput");
+const pdfFileInput = document.getElementById("pdfFile");
+const progressBar = document.getElementById("progressBar");
+const progressBarInner = document.getElementById("progressBarInner");
+
+// ✅ TXT DOWNLOAD
+document.getElementById("saveNoteBtn").onclick = ()=>{
+    const text = noteInput.value.trim();
+    if(!text) return alert("Write note first");
+    const blob = new Blob([text], {type:"text/plain"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "MyNote.txt";
+    a.click();
+};
+
+// ✅ PDF DOWNLOAD (FIXED)
+document.getElementById("savePDFBtn").onclick = ()=>{
+    const text = noteInput.value.trim();
+    if(!text) return alert("Write note first");
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const lines = doc.splitTextToSize(text, 180);
+    doc.text(lines, 10, 10);
+    doc.save("MyNote.pdf");
+};
+
+// ✅ SUMMARIZE
+document.getElementById("summarizeNoteBtn").onclick = ()=>{
+    const text = noteInput.value.trim();
+    if(!text) return alert("Write text first");
+
+    summaryOutput.style.display="block";
+    const sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [text];
+    summaryOutput.innerHTML = `<p>${sentences.slice(0,3).join(' ')}</p>`;
+};
+
+// ✅ MAIN FIXED PDF + OCR FLOW
+document.getElementById("uploadPDFBtn").onclick = async ()=>{
+    const file = pdfFileInput.files[0];
+    if(!file) return alert("Select file");
+
+    progressBar.style.display="block";
+    progressBarInner.style.width="0%";
+
+    try{
+        let text = "";
+
+        if(file.type === "application/pdf"){
+            const buffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
+
+            for(let i=1;i<=pdf.numPages;i++){
+                const page = await pdf.getPage(i);
+
+                // 🔥 TRY TEXT EXTRACTION FIRST
+                const content = await page.getTextContent();
+                let pageText = content.items.map(i=>i.str).join(" ");
+
+                // 🔥 IF EMPTY → OCR
+                if(!pageText.trim()){
+                    const viewport = page.getViewport({scale:2});
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    await page.render({canvasContext:ctx,viewport}).promise;
+
+                    const result = await Tesseract.recognize(canvas,"eng");
+                    pageText = result.data.text;
+                }
+
+                text += pageText + "\n\n";
+
+                progressBarInner.style.width = (i/pdf.numPages*100)+"%";
+            }
+
+        } else {
+            // IMAGE OCR
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file);
+            await img.decode();
+
+            const result = await Tesseract.recognize(img,"eng");
+            text = result.data.text;
+        }
+
+        noteInput.value = text.trim();
+        progressBar.style.display="none";
+        document.getElementById("summarizeNoteBtn").click();
+
+        alert("✅ Done !");
+
+    }catch(err){
+        console.error(err);
+        progressBar.style.display="none";
+        alert("❌ PDF failed — try another PDF (some are protected)");
+    }
+};
+</script>
+</body>
+</html>

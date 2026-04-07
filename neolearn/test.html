@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DFA ↔ NFA Step Simulator Animated</title>
+<style>
+/* ===== GLOBAL ===== */
+/* ===== GLOBAL ===== */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Inter',sans-serif;
+    background: radial-gradient(circle at top,#0a0a0a,#000);
+    color:#fff;
+    padding:30px;
+}
+
+/* ===== HEADINGS ===== */
+h2{
+    color:#00f5c4;
+    text-align:center;
+    margin-bottom:25px;
+    letter-spacing:1px;
+}
+
+h3{
+    margin-top:20px;
+    color:#aaa;
+}
+
+/* ===== INPUT BOXES (BIG + CLEAN) ===== */
+textarea, input{
+    width:100%;
+    min-height:180px;
+    max-height:300px;
+    resize:vertical;
+
+    background:rgba(255,255,255,0.05);
+    color:#fff;
+
+    padding:15px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.1);
+
+    font-size:14px;
+    line-height:1.6;
+    font-family:'Courier New', monospace;
+
+    backdrop-filter:blur(10px);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.6);
+
+    transition:0.3s;
+}
+
+textarea::placeholder, input::placeholder{
+    color:#888;
+}
+
+textarea:focus, input:focus{
+    outline:none;
+    border:1px solid #00f5c4;
+    box-shadow:0 0 15px rgba(0,245,196,0.4);
+}
+
+/* ===== BUTTONS ===== */
+button{
+    padding:10px 18px;
+    margin:6px 5px;
+    border:none;
+    border-radius:10px;
+
+    background:linear-gradient(90deg,#00f5c4,#00aaff);
+    color:black;
+    font-weight:600;
+
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(0,0,0,0.6);
+}
+
+/* ===== STEP CARDS ===== */
+.step{
+    margin-top:20px;
+    padding:18px;
+
+    border-radius:16px;
+    background:rgba(255,255,255,0.04);
+    backdrop-filter:blur(20px);
+
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+
+    transition:0.3s;
+}
+
+.step:hover{
+    transform:translateY(-4px);
+}
+
+/* ===== SVG AREA ===== */
+svg{
+    width:100%;
+    height:260px;
+    margin-top:15px;
+    overflow:visible;
+}
+
+/* ===== STATES ===== */
+circle{
+    fill:#111;
+    stroke:#aaa;
+    stroke-width:2;
+    transition:0.3s;
+}
+
+circle.final{
+    stroke:#ffb400;
+    stroke-width:4;
+}
+
+circle.active{
+    fill:#00f5c4;
+    stroke:#00f5c4;
+}
+
+/* ===== TEXT ===== */
+text{
+    fill:#fff;
+    font-size:14px;
+    text-anchor:middle;
+    pointer-events:none;
+}
+
+/* ===== ARROWS ===== */
+.curvedArrow{
+    stroke:#00aaff;
+    stroke-width:2;
+    fill:none;
+    marker-end:url(#arrowhead);
+}
+
+/* ===== DOT ANIMATION ===== */
+.dot{
+    fill:#ffd700;
+    r:8;
+}
+
+/* ===== RESULT TEXT ===== */
+.accept{
+    color:#00ff88;
+    font-weight:600;
+}
+
+.reject{
+    color:#ff4d4d;
+    font-weight:600;
+}
+
+/* ===== TABLE ===== */
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+    border-radius:12px;
+    overflow:hidden;
+}
+
+th, td{
+    padding:10px;
+    text-align:center;
+}
+
+th{
+    background:#00f5c4;
+    color:#000;
+}
+
+td{
+    background:#111;
+    border-bottom:1px solid #333;
+}
+
+tr:hover td{
+    background:#1a1a1a;
+}
+
+/* ===== DIVIDER ===== */
+hr{
+    margin:40px 0;
+    border:none;
+    height:1px;
+    background:linear-gradient(90deg,transparent,#00f5c4,transparent);
+}
+</style>
+</head>
+<body>
+
+<h2>DFA → NFA / NFA → DFA Visualizer</h2>
+
+<h3>DFA Input JSON</h3>
+<textarea id="dfaInput" placeholder='{"states":["q0","q1","q2","q3"],"alphabet":["0","1"],"start":"q0","accept":["q3"],"transitions":{"q0":{"0":"q1","1":"q0"},"q1":{"0":"q2","1":"q0"},"q2":{"0":"q2","1":"q3"},"q3":{"0":"q3","1":"q3"}}}'></textarea>
+<input type="text" id="dfaStrings" placeholder="Test strings, comma separated e.g., 0011,0101,000111">
+<button onclick="runDFA()">Run DFA</button>
+<div id="dfaSteps"></div>
+<div id="dfaTable"></div>
+
+<hr>
+
+<h3>NFA Input JSON</h3>
+<textarea id="nfaInput" placeholder='{"states":["q0","q1","q2"],"alphabet":["a","b"],"start":"q0","accept":["q2"],"transitions":{"q0":{"a":["q0","q1"],"b":["q0"]},"q1":{"a":["q2"],"b":["q1"]},"q2":{"a":["q2"],"b":["q2"]}}}'></textarea>
+<input type="text" id="nfaStrings" placeholder="Test strings, comma separated e.g., aa,ab,aab">
+<button onclick="runNFA()">Run NFA</button>
+<div id="nfaSteps"></div>
+<div id="nfaTable"></div>
+
+<script>
+function drawSVG(states, transitions, finalStates, activeStates, container){
+    const svgNS="http://www.w3.org/2000/svg";
+    const svg=document.createElementNS(svgNS,"svg");
+    svg.setAttribute("width","100%");
+    svg.setAttribute("height","250");
+
+    // Arrowhead
+    const defs=document.createElementNS(svgNS,"defs");
+    const marker=document.createElementNS(svgNS,"marker");
+    marker.setAttribute("id","arrowhead");
+    marker.setAttribute("markerWidth","10");
+    marker.setAttribute("markerHeight","7");
+    marker.setAttribute("refX","0");
+    marker.setAttribute("refY","3.5");
+    marker.setAttribute("orient","auto");
+    const arrow=document.createElementNS(svgNS,"polygon");
+    arrow.setAttribute("points","0 0, 10 3.5, 0 7");
+    arrow.setAttribute("fill","#00aaff");
+    marker.appendChild(arrow);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    const spacing=container.clientWidth/(states.length+1);
+    const y=150;
+    const coords={};
+
+    states.forEach((state,i)=>{
+        const x=spacing*(i+1);
+        coords[state]={x,y};
+        const c=document.createElementNS(svgNS,"circle");
+        c.setAttribute("cx",x); c.setAttribute("cy",y); c.setAttribute("r",25);
+        if(finalStates.includes(state)) c.classList.add("final");
+        if(activeStates.includes(state)) c.classList.add("active");
+        svg.appendChild(c);
+        const t=document.createElementNS(svgNS,"text");
+        t.setAttribute("x",x); t.setAttribute("y",y+5); t.textContent=state;
+        svg.appendChild(t);
+    });
+
+    for(let from in transitions){
+        for(let symbol in transitions[from]){
+            const tos = Array.isArray(transitions[from][symbol])?transitions[from][symbol]:[transitions[from][symbol]];
+            tos.forEach(to=>{
+                const path=document.createElementNS(svgNS,'path');
+                const mx=(coords[from].x+coords[to].x)/2;
+                const my=(coords[from].y+coords[to].y)/2-30;
+                const d=`M ${coords[from].x} ${coords[from].y} Q ${mx} ${my} ${coords[to].x} ${coords[to].y}`;
+                path.setAttribute('d',d);
+                path.setAttribute('class','curvedArrow');
+               path.setAttribute('marker-end','url(#arrowhead)');
+                svg.appendChild(path);
+
+                const t=document.createElementNS(svgNS,'text');
+                t.setAttribute('x',mx); t.setAttribute('y',my-5); t.textContent=symbol;
+                svg.appendChild(t);
+            });
+        }
+    }
+
+    container.appendChild(svg);
+    return coords;
+}
+
+function animateDot(svg, fromCoord, toCoord){
+    return new Promise(resolve=>{
+        const dot=document.createElementNS("http://www.w3.org/2000/svg","circle");
+        dot.setAttribute("r",8); dot.setAttribute("fill","#ff0");
+        svg.appendChild(dot);
+        let steps=30, count=0;
+        const interval=setInterval(()=>{
+            const t=count/steps;
+            const x=fromCoord.x*(1-t)+toCoord.x*t;
+            const y=fromCoord.y*(1-t)+toCoord.y*t;
+            dot.setAttribute("cx",x);
+            dot.setAttribute("cy",y);
+            count++;
+            if(count>steps){ clearInterval(interval); svg.removeChild(dot); resolve(); }
+        },40);
+    });
+}
+
+function generateTransitionTable(transitions, containerId){
+    const container=document.getElementById(containerId);
+    container.innerHTML='';
+    const table=document.createElement('table');
+    const states=Object.keys(transitions);
+    const symbols=[...new Set(states.flatMap(s=>Object.keys(transitions[s])))];
+    const thead=document.createElement('tr');
+    thead.innerHTML='<th>State</th>' + symbols.map(sym=>`<th>${sym}</th>`).join('');
+    table.appendChild(thead);
+    states.forEach(s=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${s}</td>` + symbols.map(sym=>{
+            const val=transitions[s][sym];
+            return `<td>${Array.isArray(val)?'['+val.join(',')+']':val||''}</td>`;
+        }).join('');
+        table.appendChild(tr);
+    });
+    container.appendChild(table);
+}
+
+async function runDFA(){
+    const input=document.getElementById("dfaInput").value;
+    const strings=document.getElementById("dfaStrings").value.split(",").map(s=>s.trim());
+    let dfa;
+    try{dfa=JSON.parse(input);}catch(e){alert("Invalid JSON");return;}
+    const stepsDiv=document.getElementById("dfaSteps"); stepsDiv.innerHTML="";
+
+    for(const str of strings){
+        const div=document.createElement("div"); div.className="step";
+        div.innerHTML=`<p><b>String:</b> "${str}"</p>`;
+        stepsDiv.appendChild(div);
+        let current=dfa.start;
+
+        for(let i=0;i<str.length;i++){
+            const prev=current;
+            const stepDiv=document.createElement("div"); stepDiv.className="step";
+            stepDiv.innerHTML=`<p><b>Step ${i+1}:</b> Read "${str[i]}" from ${prev}</p>`;
+            div.appendChild(stepDiv);
+
+            const coords=drawSVG(dfa.states,dfa.transitions,dfa.accept,[prev],stepDiv);
+            const next=dfa.transitions[prev][str[i]];
+            await animateDot(stepDiv.querySelector("svg"), coords[prev], coords[next]);
+            current=next;
+            stepDiv.innerHTML+=`<p>→ Move to ${current}</p>`;
+            drawSVG(dfa.states,dfa.transitions,dfa.accept,[current],stepDiv);
+        }
+
+        const resDiv=document.createElement("div");
+        resDiv.innerHTML=dfa.accept.includes(current)?`🎯 Ends at ${current} → <span class="accept">✅ Accepted</span>`:`🎯 Ends at ${current} → <span class="reject">❌ Rejected</span>`;
+        div.appendChild(resDiv);
+    }
+    generateTransitionTable(dfa.transitions,'dfaTable');
+}
+
+async function runNFA(){
+    const input=document.getElementById("nfaInput").value;
+    const strings=document.getElementById("nfaStrings").value.split(",").map(s=>s.trim());
+    let nfa;
+    try{nfa=JSON.parse(input);}catch(e){alert("Invalid JSON");return;}
+    const stepsDiv=document.getElementById("nfaSteps"); stepsDiv.innerHTML="";
+
+    for(const str of strings){
+        const div=document.createElement("div"); div.className="step";
+        div.innerHTML=`<p><b>String:</b> "${str}"</p>`;
+        stepsDiv.appendChild(div);
+
+        let current=[nfa.start];
+
+        for(let i=0;i<str.length;i++){
+            const prev=[...current];
+            let next=[];
+            current.forEach(s=>{ if(nfa.transitions[s][str[i]]) next=next.concat(nfa.transitions[s][str[i]]); });
+            current=[...new Set(next)];
+
+            const stepDiv=document.createElement("div"); stepDiv.className="step";
+            stepDiv.innerHTML=`<p><b>Step ${i+1}:</b> Read "${str[i]}" from [${prev.join(", ")}]</p>`;
+            div.appendChild(stepDiv);
+
+            const coords=drawSVG(nfa.states,nfa.transitions,nfa.accept,prev,stepDiv);
+            for(const from of prev){
+                const tos = nfa.transitions[from][str[i]] || [];
+                for(const to of tos){ await animateDot(stepDiv.querySelector("svg"), coords[from], coords[to]); }
+            }
+            stepDiv.innerHTML+=`<p>→ Move to [${current.join(", ")}]</p>`;
+            drawSVG(nfa.states,nfa.transitions,nfa.accept,current,stepDiv);
+        }
+
+        const resDiv=document.createElement("div");
+        const accepted=current.some(s=>nfa.accept.includes(s));
+        resDiv.innerHTML=accepted?`🎯 Ends at [${current.join(",")}] → <span class="accept">✅ Accepted</span>`:`🎯 Ends at [${current.join(",")}] → <span class="reject">❌ Rejected</span>`;
+        div.appendChild(resDiv);
+    }
+    generateTransitionTable(nfa.transitions,'nfaTable');
+}
+</script>
+</body>
+</html>

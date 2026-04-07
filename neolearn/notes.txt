@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoLearn Dashboard - Premium Notes</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.313/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{background: radial-gradient(circle at top,#0a0a0a,#000);color:white;}
+.container{display:flex;}
+
+.sidebar{width:230px;height:100vh;background:rgba(20,20,20,0.6);backdrop-filter:blur(20px);padding:25px;}
+.sidebar h2{color:#00f5c4;margin-bottom:20px;}
+.sidebar a{display:block;padding:12px;margin:8px 0;border-radius:10px;color:#aaa;cursor:pointer;}
+.sidebar a:hover{background:#111;color:white;}
+.active{background:linear-gradient(90deg,#00f5c4,#00aaff);color:black!important;}
+.sidebar button{width:100%;margin-top:15px;padding:10px;border:none;border-radius:10px;background:red;color:white;}
+
+.main{flex:1;padding:30px;}
+
+.cards{display:flex;gap:20px;margin-top:20px;}
+.card{flex:1;padding:20px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);}
+
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-top:20px;}
+
+textarea{width:100%;height:100px;margin:10px 0;padding:10px;background:#111;color:white;border:none;border-radius:10px;}
+
+.chat{position:fixed;right:-350px;top:0;width:350px;height:100%;background:#000;transition:0.4s;display:flex;flex-direction:column;}
+.chat.active{right:0;}
+.chat-header{padding:15px;background:linear-gradient(90deg,#00f5c4,#00aaff);color:black;}
+.chat-body{flex:1;padding:10px;overflow:auto;}
+.msg{margin:5px;padding:10px;border-radius:10px;}
+.user{background:#00aaff;text-align:right;}
+.bot{background:#222;}
+.chat-input{display:flex;}
+.chat-input input{flex:1;padding:10px;border:none;}
+.chat-input button{padding:10px;background:#00f5c4;border:none;}
+
+/* PROFILE CARD */
+.profile-card{display:flex;background: rgba(30,30,30,0.85);border-radius: 20px;padding: 30px;box-shadow: 0 15px 35px rgba(0,0,0,0.5);gap: 30px;align-items: center;max-width: 800px;margin-top: 20px;}
+.profile-left{display:flex;flex-direction:column;align-items:center;gap: 15px;}
+.profile-left .avatar{width:150px;height:150px;border-radius:50%;border: 4px solid #00f5c4;object-fit:cover;background:#222;}
+.avatar-upload{cursor:pointer;}
+.profile-right{display:flex;flex-direction:column;gap: 15px;color:#ccc;}
+.profile-right h3{font-size:24px;color:white;}
+.profile-right p{font-size:16px;color:#aaa;}
+.profile-buttons{display:flex;gap: 15px;flex-wrap: wrap;}
+.profile-buttons button{padding:10px 18px;border:none;border-radius:12px;font-weight:600;cursor:pointer;transition:0.3s;}
+.profile-buttons button:nth-child(1){ background:#00f5c4; color:#000; }
+.profile-buttons button:nth-child(2){ background:#0077ff; color:#fff; }
+.profile-buttons button:nth-child(3){ background:#ff3b3b; color:#fff; }
+.profile-buttons button:hover{transform: translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.5);}
+@media(max-width:700px){.profile-card{flex-direction:column;align-items:center;text-align:center;}.profile-buttons{justify-content:center;}}
+
+/* NOTES SECTION */
+#notesSection{display:none; max-width:900px;margin:20px auto;}
+#notesSection button{padding:10px 18px;border:none;border-radius:12px;background:#00f5c4;color:black;font-weight:600;cursor:pointer;transition:0.3s;}
+#notesSection button:hover{transform: translateY(-2px);box-shadow:0 8px 20px rgba(0,245,196,0.3);}
+#notesSection .note-card{background:#111;padding:15px 20px;border-radius:16px;border:1px solid rgba(0,245,196,0.3);color:white;}
+#notesSection .note-card p{margin:0;}
+#notesSection .note-card strong{color:#00f5c4;}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="sidebar">
+<h2>NeoLearn</h2>
+<a onclick="showSection('settings')">Settings</a>
+<a class="active" onclick="showSection('dashboard')">Dashboard</a>
+<a onclick="showSection('modules')">Modules</a>
+<a onclick="showSection('quiz')">Quizzes</a>
+<a onclick="showSection('notes')">Notes</a>
+<a onclick="showSection('analytics')">Analytics</a>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div class="main">
+<h2 id="welcome"></h2>
+
+<!-- NOTES SECTION -->
+<div id="notesSection">
+<h2 style="color:#00f5c4; margin-bottom:15px;">AI Notes 🧠</h2>
+
+<div class="notes-top-bar" style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:15px;">
+<select id="subject" style="padding:10px 15px; border-radius:12px; border:none; background:#111; color:white;">
+    <option>FLAT</option>
+    <option>DAA</option>
+    <option>Aptitude</option>
+</select>
+
+<input type="file" id="pdfFile" style="padding:10px; border-radius:12px; background:#111; color:white; cursor:pointer;" accept=".pdf"/>
+<button id="saveNoteBtn">💾 Save as PDF</button>
+<button id="summarizeNoteBtn">🤖 Summarize</button>
+</div>
+
+<textarea id="noteInput" placeholder="Write your notes..." style="width:100%; min-height:200px; padding:15px; border-radius:16px; border:none; background:#111; color:white; resize:none;"></textarea>
+
+<div id="summaryOutput" style="margin-top:20px; padding:20px; border-radius:16px; background:rgba(0,245,196,0.1); color:white; display:none;"></div>
+
+<h3 style="color:#00f5c4; margin-top:30px;">Saved Notes 📚</h3>
+<div id="notesList" style="display:flex; flex-direction:column; gap:10px;"></div>
+</div>
+</div>
+</div>
+
+<script>
+let username = localStorage.getItem("username") || "Guest";
+document.getElementById("welcome").innerText="Welcome "+username;
+
+// ================= NOTES =================
+const noteInput = document.getElementById("noteInput");
+const summaryOutput = document.getElementById("summaryOutput");
+const notesList = document.getElementById("notesList");
+const pdfFileInput = document.getElementById("pdfFile");
+
+// PDF text extraction
+async function extractPDFText(file){
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+    let fullText = '';
+    for(let i=1;i<=pdf.numPages;i++){
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item=>item.str).join(' ');
+        fullText += pageText+'\n\n';
+    }
+    return fullText;
+}
+
+// AI Summarization (simulate or call backend)
+async function summarizeText(text){
+    try{
+        let res = await fetch("http://localhost:5000/summarize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+        let data = await res.json();
+        return data.summary;
+    }catch(e){return "❌ Error summarizing note!";}
+}
+
+// AI Subject Detection (simulate)
+function detectSubject(text){
+    const t=text.toLowerCase();
+    if(t.includes("dfa")||t.includes("nfa")||t.includes("regex")) return "FLAT";
+    if(t.includes("sort")||t.includes("tree")||t.includes("graph")) return "DAA";
+    return "Aptitude";
+}
+
+// Save note as PDF
+document.getElementById("saveNoteBtn").addEventListener("click", async ()=>{
+    const text = noteInput.value.trim();
+    if(!text) return alert("No text to save!");
+
+    // Auto detect subject
+    const subject = detectSubject(text);
+    document.getElementById("subject").value = subject;
+
+    // Create PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const lines = doc.splitTextToSize(text, 180);
+    doc.text(lines, 15, 20);
+    doc.save(`${subject}_Note.pdf`);
+
+    // Add to UI
+    const noteCard = document.createElement("div");
+    noteCard.className="note-card";
+    noteCard.innerHTML=`<strong>${subject}:</strong> <p>${text}</p>`;
+    notesList.prepend(noteCard);
+    noteInput.value="";
+    summaryOutput.style.display="none";
+});
+
+// Summarize Note
+document.getElementById("summarizeNoteBtn").addEventListener("click", async ()=>{
+    const text = noteInput.value.trim();
+    if(!text) return alert("No text to summarize!");
+    summaryOutput.style.display="block";
+    summaryOutput.innerHTML="🌀 Summarizing...";
+    const summary = await summarizeText(text);
+    summaryOutput.innerHTML = `<p>${summary}</p><button onclick="copySummary()" style="margin-top:10px;padding:8px 12px;border:none;border-radius:8px;background:#00f5c4;color:black;cursor:pointer;">📋 Copy Summary</button>`;
+});
+
+function copySummary(){
+    navigator.clipboard.writeText(summaryOutput.querySelector("p").innerText);
+    alert("Summary copied ✅");
+}
+
+// Upload PDF and auto summarize + detect subject
+pdfFileInput.addEventListener("change", async ()=>{
+    const file = pdfFileInput.files[0];
+    if(!file) return alert("Select a PDF first!");
+    const text = await extractPDFText(file);
+    if(!text.trim()) return alert("PDF has no readable text!");
+    noteInput.value = text;
+
+    // Detect subject automatically
+    const subject = detectSubject(text);
+    document.getElementById("subject").value = subject;
+
+    // Auto summarize
+    await document.getElementById("summarizeNoteBtn").click();
+});
+</script>
+</body>
+</html>

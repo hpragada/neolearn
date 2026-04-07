@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Profile</title>
+
+<style>
+:root{
+  --bg1:#0d1117;
+  --bg2:#1f2937;
+  --card:rgba(255,255,255,0.05);
+  --glass:rgba(255,255,255,0.06);
+  --text:#e6edf3;
+  --muted:#94a3b8;
+  --accent:#00f5c4;
+}
+
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI',sans-serif;
+}
+
+/* BODY */
+body{
+  min-height:100vh;
+  background: linear-gradient(135deg,#0d1117,#1f2937);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:30px;
+}
+
+/* PROFILE CARD */
+.card{
+  position:relative;
+  width:90%;
+  max-width:700px;
+  background:var(--glass);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.1);
+  padding:25px;
+  border-radius:20px;
+  display:flex;
+  gap:25px;
+  align-items:center;
+  box-shadow:0 10px 40px rgba(0,0,0,0.6);
+  transition:0.3s;
+}
+
+.card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 0 25px rgba(0,245,196,0.2);
+}
+
+/* GLOW BACK EFFECT */
+.card::before{
+  content:"";
+  position:absolute;
+  width:200px;
+  height:200px;
+  background:var(--accent);
+  filter:blur(120px);
+  opacity:0.12;
+  top:-50px;
+  right:-50px;
+  z-index:0;
+}
+
+/* AVATAR */
+.avatar{
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  overflow:hidden;
+  border:2px solid var(--accent);
+  box-shadow:0 0 15px rgba(0,245,196,0.5);
+  z-index:1;
+}
+
+.avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+/* TEXT */
+h2{
+  font-size:24px;
+  margin-bottom:6px;
+}
+
+p{
+  color:var(--muted);
+  font-size:14px;
+  margin:3px 0;
+}
+
+/* BUTTON (MATCH DASHBOARD STYLE) */
+button{
+  margin-top:10px;
+  padding:10px 14px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  background: linear-gradient(135deg,#1f2937,#111827);
+  color:white;
+  transition:0.3s;
+  position:relative;
+  overflow:hidden;
+}
+
+/* SHINE */
+button::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background: linear-gradient(120deg,transparent,rgba(255,255,255,0.3),transparent);
+  transition:0.5s;
+}
+
+button:hover::before{
+  left:100%;
+}
+
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 15px rgba(0,245,196,0.4);
+}
+
+/* BOXES */
+.box{
+  width:90%;
+  max-width:700px;
+  margin-top:18px;
+  padding:20px;
+  border-radius:16px;
+  background:var(--glass);
+  backdrop-filter:blur(15px);
+  border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  transition:0.3s;
+}
+
+.box:hover{
+  transform:translateY(-3px);
+  box-shadow:0 0 20px rgba(0,245,196,0.2);
+}
+
+/* SCORE */
+#score{
+  font-size:32px;
+  font-weight:bold;
+  color:var(--accent);
+  text-shadow:0 0 15px rgba(0,245,196,0.5);
+}
+
+/* EDIT BOX */
+.edit-box{
+  display:none;
+  animation:fade 0.3s ease;
+}
+
+@keyframes fade{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* INPUTS */
+input,select{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  background:rgba(255,255,255,0.08);
+  color:var(--text);
+  transition:0.3s;
+}
+
+input:focus,select:focus{
+  box-shadow:0 0 10px rgba(0,245,196,0.5);
+}
+
+/* SELECT FIX */
+select{
+  color:#e6edf3;
+}
+
+option{
+  color:#000;
+  background:#fff;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- PROFILE -->
+<div class="card">
+  <div>
+    <div class="avatar">
+      <img id="img" src="https://via.placeholder.com/100">
+    </div>
+
+    <input type="file" id="file" hidden>
+    <button id="chooseBtn">Change Photo</button>
+  </div>
+
+  <div>
+    <h2 id="name">User</h2>
+    <p id="college">College</p>
+    <p id="branch">Branch</p>
+    <button id="editBtn">Edit Profile</button>
+  </div>
+</div>
+
+<!-- EDIT -->
+<div class="box edit-box" id="editBox">
+  <input id="newName" placeholder="Enter name">
+
+  <select id="branchSel">
+    <option value="">Select Branch</option>
+    <option>CSE</option>
+    <option>ECE</option>
+    <option>EEE</option>
+    <option>IT</option>
+  </select>
+
+  <select id="collegeSelect">
+    <option value="">Select College</option>
+    <option>JNTU Hyderabad</option>
+    <option>MIT</option>
+    <option>Stanford</option>
+    <option value="other">Other</option>
+  </select>
+
+  <input id="otherCollege" placeholder="Other College" style="display:none;">
+
+  <button id="saveBtn">Save</button>
+</div>
+
+<div class="box">
+  <h2 id="score">0%</h2>
+</div>
+
+<div class="box">
+  <button id="logoutBtn">Logout</button>
+</div>
+
+<script type="module">
+
+import { auth, db } from "./firebase.js";
+
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import {
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+
+let user;
+
+const img = document.getElementById("img");
+const fileInput = document.getElementById("file");
+const editBox = document.getElementById("editBox");
+
+/* AUTH */
+onAuthStateChanged(auth, async (u) => {
+  if (!u) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  user = u;
+  await createUser();
+  await loadProfile();
+});
+
+/* OPEN FILE */
+document.getElementById("chooseBtn").onclick = () => fileInput.click();
+
+/* PREVIEW */
+fileInput.onchange = (e) => {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = () => img.src = reader.result;
+  reader.readAsDataURL(file);
+};
+
+/* EDIT */
+document.getElementById("editBtn").onclick = () => {
+  editBox.style.display = "block";
+};
+
+/* COLLEGE OTHER */
+document.getElementById("collegeSelect").onchange = (e) => {
+  document.getElementById("otherCollege").style.display =
+    e.target.value === "other" ? "block" : "none";
+};
+
+function getCollege(){
+  const v = document.getElementById("collegeSelect").value;
+  return v === "other"
+    ? document.getElementById("otherCollege").value
+    : v;
+}
+
+/* SAVE */
+document.getElementById("saveBtn").onclick = async () => {
+  try {
+
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      alert("Auth not ready. Try again in 2 seconds");
+      return;
+    }
+
+    const uid = currentUser.uid;
+
+    const name = document.getElementById("newName").value || "User";
+    const branch = document.getElementById("branchSel").value || "CSE";
+    const college = getCollege() || "JNTU Hyderabad";
+
+    await setDoc(doc(db, "users", uid), {
+      name,
+      branch,
+      college,
+      avatar: img.src,
+      uid
+    });
+
+    // 🔥 UI UPDATE (IMPORTANT)
+    document.getElementById("name").innerText = name;
+    document.getElementById("branch").innerText = branch;
+    document.getElementById("college").innerText = college;
+
+    alert("Saved 🔥");
+
+  } catch (err) {
+    console.error("SAVE ERROR:", err);
+    alert(err.message);
+  }
+};
+
+
+/* CREATE USER */
+async function createUser(){
+  const refDoc = doc(db,"users",user.uid);
+  const snap = await getDoc(refDoc);
+
+  if(!snap.exists()){
+    await setDoc(refDoc,{
+      name:"User",
+      branch:"CSE",
+      college:"JNTU Hyderabad",
+      avatar:"https://via.placeholder.com/100",
+      score:0
+    });
+  }
+}
+
+/* LOAD */
+async function loadProfile(){
+  const refDoc = doc(db,"users",user.uid);
+  const snap = await getDoc(refDoc);
+
+  if(snap.exists()){
+    const d = snap.data();
+
+    document.getElementById("name").innerText = d.name;
+    document.getElementById("branch").innerText = d.branch;
+    document.getElementById("college").innerText = d.college;
+    document.getElementById("score").innerText = (d.score || 0) + "%";
+
+    if(d.avatar) img.src = d.avatar;
+  }
+}
+
+/* LOGOUT */
+document.getElementById("logoutBtn").onclick = async () => {
+  await signOut(auth);
+  window.location.href = "login.html";
+};
+
+</script>
+
+</body>
+</html>

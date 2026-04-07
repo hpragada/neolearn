@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoLearn Auth</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+
+/* RESET */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
+
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: radial-gradient(circle at top,#0a0a0a,#000);
+  color:white;
+  overflow:hidden;
+}
+
+/* 🔥 MAIN LAYOUT */
+.wrapper{
+  display:flex;
+  width:850px;
+  height:500px;
+  border-radius:20px;
+  overflow:hidden;
+  backdrop-filter:blur(20px);
+}
+
+/* 🔥 LEFT LOGO SIDE */
+.left{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(255,255,255,0.02);
+  position:relative;
+}
+
+/* glow */
+.left::before{
+  content:"";
+  position:absolute;
+  width:300px;
+  height:300px;
+  background:#00f5c4;
+  filter:blur(120px);
+  opacity:0.25;
+}
+
+/* logo */
+.left img{
+  width:200px;
+  z-index:1;
+
+  animation:float 3s ease-in-out infinite,
+             glow 2.5s ease-in-out infinite;
+}
+
+@keyframes float{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-12px); }
+}
+
+@keyframes glow{
+  0%,100%{ filter:drop-shadow(0 0 10px #00f5c4); }
+  50%{ filter:drop-shadow(0 0 25px #00f5c4); }
+}
+
+/* 🔥 RIGHT FORM */
+.container{
+  flex:1;
+  padding:35px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  background:rgba(255,255,255,0.03);
+}
+
+/* TITLE */
+h2{
+  margin-bottom:20px;
+  text-align:center;
+  background:linear-gradient(90deg,#00f5c4,#00aaff);
+  -webkit-background-clip:text;
+  color:transparent;
+}
+
+/* INPUT */
+input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:none;
+  border-radius:10px;
+  background:#111;
+  color:white;
+  outline:none;
+}
+
+/* BUTTON */
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(45deg,#00f5c4,#00aaff);
+  color:black;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+button:hover{
+  transform:scale(1.05);
+}
+
+/* TOGGLE */
+.toggle{
+  margin-top:15px;
+  color:#aaa;
+  cursor:pointer;
+  text-align:center;
+}
+
+.toggle span{
+  color:#00f5c4;
+}
+
+/* EYE */
+.eye{
+  position:absolute;
+  right:15px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+}
+
+/* PASSWORD WRAP */
+.pass-wrap{
+  position:relative;
+}
+
+/* 📱 MOBILE */
+@media(max-width:768px){
+  .wrapper{
+    flex-direction:column;
+    width:90%;
+    height:auto;
+  }
+
+  .left{
+    display:none; /* hide logo on small screens */
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <!-- 🔥 LEFT LOGO -->
+  <div class="left">
+    <img src="logo neo.png" alt="logo">
+  </div>
+
+  <!-- 🔥 RIGHT FORM -->
+  <div class="container">
+
+    <h2 id="title">Sign In</h2>
+
+    <input type="email" id="email" placeholder="Email">
+    
+    <div class="pass-wrap">
+      <input type="password" id="password" placeholder="Password">
+      <span class="eye" onclick="togglePassword()">👁️</span>
+    </div>
+
+    <input type="text" id="name" placeholder="Full Name" style="display:none;">
+
+    <button id="authBtn">Sign In</button>
+
+    <div class="toggle" onclick="toggleMode()">
+      Don’t have an account? <span>Sign Up</span>
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module">
+
+import { auth } from "./firebase.js";
+
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  updateProfile,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+let isSignup = false;
+
+window.toggleMode = function(){
+  isSignup = !isSignup;
+  document.getElementById("title").innerText = isSignup ? "Sign Up" : "Sign In";
+  document.getElementById("authBtn").innerText = isSignup ? "Sign Up" : "Sign In";
+  document.getElementById("name").style.display = isSignup ? "block" : "none";
+  document.querySelector(".toggle").innerHTML = isSignup
+    ? `Already have an account? <span>Sign In</span>`
+    : `Don’t have an account? <span>Sign Up</span>`;
+};
+
+window.togglePassword = function(){
+  let pass = document.getElementById("password");
+  pass.type = pass.type === "password" ? "text" : "password";
+};
+
+document.getElementById("authBtn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const name = document.getElementById("name").value.trim();
+
+  if (!email || !password || (isSignup && !name)) {
+    alert("❌ Please fill all required fields!");
+    return;
+  }
+
+  try {
+    if (isSignup) {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCred.user, { displayName: name });
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+  } catch(e) {
+    alert("❌ " + e.message);
+  }
+});
+
+onAuthStateChanged(auth, (user) => {
+  if(user){
+    window.location.replace("dashboard.html");
+  }
+});
+
+</script>
+
+</body>
+</html>

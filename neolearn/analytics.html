@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NeoLearn Analytics</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<style>
+
+/* ===== BODY ===== */
+body{
+  margin:0;
+  font-family:Inter,sans-serif;
+  background: radial-gradient(circle at top,#0b0f14,#020617);
+  color:#e6edf3;
+  text-align:center;
+}
+
+/* TITLE */
+h1{
+  margin-top:20px;
+  font-weight:600;
+  letter-spacing:0.5px;
+}
+
+/* STATS CONTAINER */
+.stats{
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  margin-top:20px;
+  flex-wrap:wrap;
+}
+
+/* CARD */
+.card{
+  background:rgba(255,255,255,0.04);
+  padding:20px;
+  border-radius:14px;
+  width:180px;
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.06);
+  transition:0.3s;
+}
+
+.card:hover{
+  transform:translateY(-4px);
+}
+
+/* NUMBERS */
+.card h2{
+  margin:0;
+  font-size:28px;
+  color:#4fd1c5;
+}
+
+/* LABEL */
+.card p{
+  margin:5px 0 0;
+  font-size:13px;
+  color:#94a3b8;
+}
+
+/* CHART */
+canvas{
+  max-width:700px;
+  margin:30px auto;
+}
+
+/* BUTTON */
+button{
+  margin-top:10px;
+  padding:10px 20px;
+  border:none;
+  border-radius:8px;
+  background:rgba(79,209,197,0.15);
+  color:#4fd1c5;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+button:hover{
+  background:rgba(79,209,197,0.25);
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>📊 Analytics Dashboard</h1>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="card">
+    <h2 id="totalTests">0</h2>
+    <p>Tests Taken</p>
+  </div>
+
+  <div class="card">
+    <h2 id="avgScore">0</h2>
+    <p>Average %</p>
+  </div>
+
+  <div class="card">
+    <h2 id="bestScore">0</h2>
+    <p>Best %</p>
+  </div>
+</div>
+
+<!-- CHART -->
+<canvas id="scoreChart"></canvas>
+
+<button onclick="goBack()">⬅ Back</button>
+
+<script>
+
+
+// 🔥 YOUR FIREBASE CONFIG (PUT YOUR REAL KEYS)
+const firebaseConfig = {
+     apiKey: "AIzaSyBBydrD1fBG7H47qsozUxHFuxlbWH8DSaE",
+    authDomain: "neolearnn-69e67.firebaseapp.com",
+    projectId: "neolearnn-69e67",
+    storageBucket: "neolearnn-69e67.firebasestorage.app",
+    messagingSenderId: "632656148768",
+    appId: "1:632656148768:web:bcb4d4355e93138c84bf45",
+    measurementId: "G-PBLVPV38T6"
+  };
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ===== AUTH + LOAD DATA =====
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.top.location.href = "login.html";
+    return;
+  }
+
+  const userRef = db.collection("users").doc(user.uid);
+
+  userRef.onSnapshot(doc=>{
+    const data = doc.data() || {};
+    const quizzes = data.quizProgress || {};
+
+    let scores = Object.values(quizzes).map(q => q.percent || 0);
+
+    if(scores.length === 0){
+      scores = [0];
+    }
+
+    // ===== STATS =====
+    let total = scores.length;
+    let sum = scores.reduce((a,b)=>a+b,0);
+    let avg = (sum/total).toFixed(1);
+    let best = Math.max(...scores);
+
+    document.getElementById("totalTests").innerText = total;
+    document.getElementById("avgScore").innerText = avg;
+    document.getElementById("bestScore").innerText = best;
+
+    // ===== CHART =====
+    const ctx = document.getElementById("scoreChart").getContext("2d");
+
+    if(window.chart) window.chart.destroy();
+
+    window.chart = new Chart(ctx,{
+      type:"bar",
+      data:{
+        labels:Object.keys(quizzes),
+        datasets:[{
+          label:"Score %",
+          data:scores,
+          backgroundColor:"rgba(79,209,197,0.6)"
+        }]
+      },
+      options:{
+        scales:{
+          y:{
+            beginAtZero:true,
+            max:100
+          }
+        }
+      }
+    });
+
+  });
+
+});
+
+// ===== BACK =====
+function goBack(){
+  window.top.location.href = "profile.html";
+}
+
+</script>
+
+</body>
+</html>

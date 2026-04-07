@@ -1,0 +1,195 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: radial-gradient(circle at top, #0a0a0a, #000);
+    color: white;
+    overflow-x: hidden;
+}
+
+/* Layout */
+.layout {
+    display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 230px;
+    height: 100vh;
+    background: rgba(20,20,20,0.6);
+    backdrop-filter: blur(20px);
+    padding: 30px;
+    transition: 0.4s;
+}
+
+.sidebar:hover {
+    width: 260px;
+}
+
+.sidebar h2 {
+    color: #00f5c4;
+    margin-bottom: 30px;
+}
+
+.sidebar a {
+    display: block;
+    margin: 10px 0;
+    padding: 10px;
+    color: #aaa;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+}
+
+.active {
+    background: linear-gradient(90deg,#00f5c4,#00aaff);
+    color: black !important;
+}
+
+/* Main */
+.main {
+    flex: 1;
+    padding: 30px;
+}
+
+/* Topbar */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.chat-toggle {
+    background: linear-gradient(45deg,#00f5c4,#00aaff);
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Cards */
+.stats {
+    display: flex;
+    gap: 20px;
+}
+
+.card {
+    background: rgba(255,255,255,0.03);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+    flex: 1;
+    backdrop-filter: blur(20px);
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.glow:hover {
+    box-shadow: 0 0 25px rgba(0,255,200,0.5);
+}
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Chat Panel */
+.chat-panel {
+    position: fixed;
+    right: -350px;
+    top: 0;
+    width: 350px;
+    height: 100%;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(20px);
+    transition: 0.4s;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-panel.active {
+    right: 0;
+}
+
+.chat-header {
+    padding: 15px;
+    background: linear-gradient(90deg,#00f5c4,#00aaff);
+    color: black;
+    font-weight: bold;
+}
+
+.chat-body {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.chat-body .bot {
+    background: #222;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+}
+
+.chat-body .user {
+    background: #00aaff;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    text-align: right;
+}
+
+.chat-input {
+    display: flex;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+}
+
+.chat-input button {
+    padding: 10px;
+    border: none;
+    background: #00f5c4;
+}
+
+/* Animations */
+.fade-in {
+    animation: fade 1s ease;
+}
+
+@keyframes fade {
+    from {opacity:0; transform: translateY(20px);}
+    to {opacity:1; transform: translateY(0);}
+}
+@media(max-width:768px){
+
+    .sidebar{
+        display:none;
+    }
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .cards{
+        flex-direction:column;
+    }
+}

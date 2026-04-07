@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NeoLearn</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+/* RESET */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Sora',sans-serif;
+}
+
+body{
+    height:100vh;
+    overflow:hidden;
+    color:white;
+    background: radial-gradient(circle at 20% 20%, #001a14, #000);
+}
+
+/* 🔥 BACKGROUND GLOW */
+body::before{
+    content:"";
+    position:absolute;
+    width:500px;
+    height:500px;
+    background:#00f5c4;
+    filter:blur(200px);
+    top:-120px;
+    left:-120px;
+    opacity:0.18;
+}
+
+/* NAV */
+nav{
+    display:flex;
+    justify-content:space-between;
+    padding:20px 60px;
+    align-items:center;
+    backdrop-filter:blur(10px);
+}
+
+nav h2{
+    font-size:24px;
+    font-weight:700;
+    letter-spacing:0.5px;
+
+    /* 🔥 animated gradient text */
+    background:linear-gradient(90deg,#00f5c4,#00aaff,#00f5c4);
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+
+    animation:gradientMove 4s linear infinite;
+}
+
+@keyframes gradientMove{
+    to{ background-position:200% center; }
+}
+
+nav a{
+    color:#9aa4b2;
+    text-decoration:none;
+    transition:0.3s;
+}
+
+nav a:hover{
+    color:#fff;
+}
+
+/* HERO */
+.hero{
+    height:65vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+}
+
+/* LOGO */
+.hero img{
+    width:120px;
+    margin-bottom:18px;
+
+    opacity:0;
+    transform:translateY(-30px) scale(0.8);
+    animation:logoEntry 0.8s ease forwards,
+               float 3s ease-in-out infinite 1s,
+               glowPulse 2.5s ease-in-out infinite 1s;
+}
+
+@keyframes logoEntry{
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+
+@keyframes float{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-12px); }
+}
+
+@keyframes glowPulse{
+    0%,100%{
+        filter: drop-shadow(0 0 10px rgba(0,245,196,0.3));
+    }
+    50%{
+        filter: drop-shadow(0 0 30px rgba(0,245,196,0.7));
+    }
+}
+
+/* TITLE */
+.hero h1{
+    font-size:48px;
+    font-weight:700;
+
+    background:linear-gradient(90deg,#00f5c4,#00aaff,#00f5c4);
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    color:transparent;
+
+    animation:gradientMove 5s linear infinite;
+}
+
+/* TEXT */
+.hero p{
+    margin:15px 0;
+    color:#9aa4b2;
+    max-width:520px;
+    font-size:15px;
+    line-height:1.6;
+}
+
+/* BUTTON */
+.btn{
+    padding:12px 28px;
+    border-radius:12px;
+    background:linear-gradient(45deg,#00f5c4,#00aaff);
+    color:black;
+    text-decoration:none;
+    font-weight:600;
+    transition:0.3s;
+    box-shadow:0 0 25px rgba(0,245,196,0.3);
+}
+
+.btn:hover{
+    transform:translateY(-2px) scale(1.06);
+    box-shadow:0 0 40px rgba(0,245,196,0.6);
+}
+
+/* FEATURES */
+.features{
+    display:flex;
+    gap:20px;
+    padding:0 60px;
+    margin-top:10px;
+}
+
+/* CARD */
+.card{
+    flex:1;
+    padding:22px;
+    border-radius:18px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.08);
+    backdrop-filter:blur(25px);
+    position:relative;
+    overflow:hidden;
+    transition:0.3s;
+
+    /* 🔥 entry animation */
+    opacity:0;
+    transform:translateY(30px);
+    animation:cardEntry 0.8s ease forwards;
+}
+
+.card:nth-child(2){ animation-delay:0.2s; }
+.card:nth-child(3){ animation-delay:0.4s; }
+
+@keyframes cardEntry{
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+/* SHINE */
+.card::before{
+    content:"";
+    position:absolute;
+    width:200%;
+    height:100%;
+    background:linear-gradient(120deg,transparent,rgba(255,255,255,0.12),transparent);
+    transform:translateX(-100%);
+}
+
+.card:hover::before{
+    transform:translateX(100%);
+    transition:0.7s;
+}
+
+.card:hover{
+    transform:translateY(-10px);
+    box-shadow:0 0 35px rgba(0,255,200,0.25);
+}
+
+.card h3{
+    margin-bottom:8px;
+}
+
+.card p{
+    font-size:14px;
+    color:#9aa4b2;
+}
+
+/* FOOTER */
+footer{
+    text-align:center;
+    padding:10px;
+    font-size:12px;
+    color:#666;
+}
+
+</style>
+</head>
+
+<body>
+
+<nav>
+    <h2>NeoLearn</h2>
+    <a href="login.html">Login</a>
+</nav>
+
+<section class="hero">
+    <img src="logo neo.png">
+    <h1>Learn Smarter with AI</h1>
+    <p>
+        NeoLearn adapts to your learning style using AI to help you master concepts faster.
+    </p>
+    <a href="login.html" class="btn">Start Learning 🚀</a>
+</section>
+
+<section class="features">
+    <div class="card">
+        <h3>🤖 AI Tutor</h3>
+        <p>Real-time explanations powered by AI.</p>
+    </div>
+
+    <div class="card">
+        <h3>📊 Adaptive Learning</h3>
+        <p>Personalized learning paths.</p>
+    </div>
+
+    <div class="card">
+        <h3>⚡ Smart Analytics</h3>
+        <p>Track progress with insights.</p>
+    </div>
+</section>
+
+<footer>
+    © 2026 NeoLearn
+</footer>
+
+</body>
+</html>

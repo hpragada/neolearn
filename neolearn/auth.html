@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoLearn Auth</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+body{height:100vh;display:flex;justify-content:center;align-items:center;background: radial-gradient(circle at top,#0a0a0a,#000);color:white;}
+body::before{content:"";position:absolute;width:400px;height:400px;background:linear-gradient(45deg,#00f5c4,#00aaff);filter:blur(120px);opacity:0.3;}
+.container{position:relative;width:350px;padding:30px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);backdrop-filter:blur(20px);text-align:center;animation:fade 1s ease;}
+h2{margin-bottom:20px;background:linear-gradient(90deg,#00f5c4,#00aaff);-webkit-background-clip:text;color:transparent;}
+input{width:100%;padding:12px;margin:10px 0;border:none;border-radius:10px;background:#111;color:white;outline:none;}
+button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;background:linear-gradient(45deg,#00f5c4,#00aaff);color:black;font-weight:bold;cursor:pointer;}
+.toggle{margin-top:15px;color:#aaa;cursor:pointer;}
+.toggle span{color:#00f5c4;}
+.eye{position:absolute;right:20px;top:53%;cursor:pointer;}
+@keyframes fade{from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2 id="title">Sign In</h2>
+    <input type="email" id="email" placeholder="Email">
+    <div style="position:relative;">
+        <input type="password" id="password" placeholder="Password">
+        <span class="eye" onclick="togglePassword()">👁️</span>
+    </div>
+    <input type="text" id="name" placeholder="Full Name" style="display:none;">
+    <button id="authBtn">Sign In</button>
+    <div class="toggle" onclick="toggleMode()">
+        Don’t have an account? <span>Sign Up</span>
+    </div>
+</div>
+
+<script type="module">
+import { auth } from "./firebase.js";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+let isSignup = false;
+
+function toggleMode(){
+    isSignup = !isSignup;
+    document.getElementById("title").innerText = isSignup ? "Sign Up" : "Sign In";
+    document.getElementById("authBtn").innerText = isSignup ? "Sign Up" : "Sign In";
+    document.getElementById("name").style.display = isSignup ? "block" : "none";
+    document.querySelector(".toggle").innerHTML = isSignup
+        ? `Already have an account? <span>Sign In</span>`
+        : `Don’t have an account? <span>Sign Up</span>`;
+}
+
+function togglePassword(){
+    const pass = document.getElementById("password");
+    pass.type = pass.type === "password" ? "text" : "password";
+}
+
+document.getElementById("authBtn").addEventListener("click", async ()=>{
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const name = document.getElementById("name").value.trim();
+
+    if(!email || !password || (isSignup && !name)){
+        alert("Fill all fields!");
+        return;
+    }
+
+    try{
+        if(isSignup){
+            await createUserWithEmailAndPassword(auth,email,password);
+            await updateProfile(auth.currentUser, { displayName: name });
+        } else {
+            await signInWithEmailAndPassword(auth,email,password);
+        }
+        window.location.href = "profile.html";
+    } catch(e){
+        alert("❌ " + e.message);
+    }
+});
+
+onAuthStateChanged(auth,user=>{
+    if(user){ window.location.href = "profile.html"; }
+});
+</script>
+</body>
+</html>
